@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WhatsApp Floating — Live Demo</title>
+<meta name="description" content="Live demo of the WhatsApp Floating library — a dependency-free floating WhatsApp button with geolocation-based phone routing." />
+<style>
+    /* Fixed light palette regardless of OS/browser dark mode — the demo
+       relies on explicit colors below, so letting the browser force a dark
+       scheme on top would make dark-on-dark text unreadable. */
+    :root { color-scheme: light; }
+    html, body {
+        background: #ffffff;
+    }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 40px 20px 120px;
+        line-height: 1.6;
+        color: #1a1a1a;
+    }
+    h1, h2 { color: #1a1a1a; }
+    h1 { font-size: 1.6rem; }
+    a { color: #128C7E; }
+    code, pre {
+        background: #f4f4f4;
+        color: #1a1a1a;
+        border-radius: 6px;
+        padding: 2px 6px;
+        font-size: 0.9em;
+    }
+    pre { padding: 16px; overflow-x: auto; }
+    .top-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 8px;
+    }
+    .badge {
+        display: inline-block;
+        background: #25D366;
+        color: #fff;
+        border-radius: 999px;
+        padding: 2px 10px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .lang-switch {
+        display: inline-flex;
+        border: 1px solid #ccc;
+        border-radius: 999px;
+        overflow: hidden;
+    }
+    .lang-switch button {
+        border: 0;
+        margin: 0;
+        border-radius: 0;
+        background: #fff;
+        color: #1a1a1a;
+        padding: 6px 14px;
+        font-size: 0.85rem;
+    }
+    .lang-switch button.active {
+        background: #25D366;
+        color: #fff;
+        font-weight: 600;
+    }
+    button {
+        cursor: pointer;
+        border: 1px solid #ccc;
+        background: #fff;
+        color: #1a1a1a;
+        border-radius: 6px;
+        padding: 8px 14px;
+        margin: 4px 4px 4px 0;
+    }
+    #log {
+        background: #0d1117;
+        color: #c9d1d9;
+        padding: 16px;
+        border-radius: 8px;
+        font-family: ui-monospace, monospace;
+        font-size: 0.85rem;
+        white-space: pre-wrap;
+        max-height: 260px;
+        overflow-y: auto;
+    }
+    footer {
+        margin-top: 48px;
+        padding-top: 16px;
+        border-top: 1px solid #eee;
+        font-size: 0.85rem;
+        color: #666;
+    }
+</style>
+</head>
+<body>
+    <div class="top-bar">
+        <span class="badge">demo</span>
+        <div class="lang-switch" role="group" aria-label="Language / Idioma">
+            <button type="button" data-lang="en">EN</button>
+            <button type="button" data-lang="pt">PT-BR</button>
+        </div>
+    </div>
+
+    <h1 data-i18n="title">WhatsApp Floating — Live Demo</h1>
+    <p data-i18n="intro">
+        This page loads the library straight from jsDelivr (npm), the same way you would in production.
+        The floating button in the bottom-right corner is rendered by the library itself — no extra HTML required.
+    </p>
+    <p data-i18n="sourceNote">
+        Source on <a href="https://github.com/dansp89/whatsapp-floating" target="_blank" rel="noopener noreferrer">GitHub</a> ·
+        Package on <a href="https://www.npmjs.com/package/whatsapp-floating" target="_blank" rel="noopener noreferrer">npm</a>.
+    </p>
+
+    <h2 data-i18n="configTitle">Configuration used on this page</h2>
+    <pre id="config-preview"></pre>
+
+    <h2 data-i18n="controlsTitle">Controls (public API)</h2>
+    <button data-action="open">WhatsAppFloating.open()</button>
+    <button data-action="close">WhatsAppFloating.close()</button>
+    <button data-action="reload">WhatsAppFloating.reload()</button>
+    <button data-action="destroy">WhatsAppFloating.destroy()</button>
+    <button data-action="getPhone">getPhone()</button>
+    <button data-action="getLocation">getLocation()</button>
+
+    <h2 data-i18n="eventsTitle">Events / Log</h2>
+    <div id="log"></div>
+
+    <footer data-i18n="footer">
+        Built by <a href="https://sellvex.com.br" target="_blank" rel="noopener noreferrer">Sellvex</a> · MIT License
+    </footer>
+
+    <script>
+        var I18N = {
+            en: {
+                htmlLang: "en",
+                pageTitle: "WhatsApp Floating — Live Demo",
+                title: "WhatsApp Floating — Live Demo",
+                intro: "This page loads the library straight from jsDelivr (npm), the same way you would in production. The floating button in the bottom-right corner is rendered by the library itself — no extra HTML required.",
+                sourceNote: 'Source on <a href="https://github.com/dansp89/whatsapp-floating" target="_blank" rel="noopener noreferrer">GitHub</a> · Package on <a href="https://www.npmjs.com/package/whatsapp-floating" target="_blank" rel="noopener noreferrer">npm</a>.',
+                configTitle: "Configuration used on this page",
+                controlsTitle: "Controls (public API)",
+                eventsTitle: "Events / Log",
+                footer: 'Built by <a href="https://sellvex.com.br" target="_blank" rel="noopener noreferrer">Sellvex</a> · MIT License',
+                message: "Hi! I'd like to make a reservation."
+            },
+            pt: {
+                htmlLang: "pt-BR",
+                pageTitle: "WhatsApp Floating — Demonstração",
+                title: "WhatsApp Floating — Demonstração ao Vivo",
+                intro: "Esta página carrega a biblioteca diretamente do jsDelivr (npm), da mesma forma que você usaria em produção. O botão flutuante no canto inferior direito é renderizado pela própria biblioteca — sem necessidade de HTML adicional.",
+                sourceNote: 'Código-fonte no <a href="https://github.com/dansp89/whatsapp-floating" target="_blank" rel="noopener noreferrer">GitHub</a> · Pacote no <a href="https://www.npmjs.com/package/whatsapp-floating" target="_blank" rel="noopener noreferrer">npm</a>.',
+                configTitle: "Configuração usada nesta página",
+                controlsTitle: "Controles (API pública)",
+                eventsTitle: "Eventos / Log",
+                footer: 'Desenvolvido pela <a href="https://sellvex.com.br" target="_blank" rel="noopener noreferrer">Sellvex</a> · Licença MIT',
+                message: "Olá! Quero fazer uma reserva."
+            }
+        };
+
+        function detectInitialLang() {
+            var saved = null;
+            try { saved = localStorage.getItem("wa_demo_lang"); } catch (e) {}
+            if (saved && I18N[saved]) return saved;
+            var nav = (navigator.language || "en").toLowerCase();
+            return nav.indexOf("pt") === 0 ? "pt" : "en";
+        }
+
+        function updateConfigPreview() {
+            var preview = document.getElementById("config-preview");
+            if (!preview || !window.WhatsAppFloatingConfig) return;
+            preview.textContent = JSON.stringify(window.WhatsAppFloatingConfig, function (key, value) {
+                return typeof value === "function" ? "[Function]" : value;
+            }, 2);
+        }
+
+        function applyLang(lang) {
+            var dict = I18N[lang] || I18N.en;
+            document.documentElement.lang = dict.htmlLang;
+            document.title = dict.pageTitle;
+
+            document.querySelectorAll("[data-i18n]").forEach(function (el) {
+                var key = el.getAttribute("data-i18n");
+                if (dict[key] != null) el.innerHTML = dict[key];
+            });
+
+            document.querySelectorAll(".lang-switch button").forEach(function (btn) {
+                btn.classList.toggle("active", btn.getAttribute("data-lang") === lang);
+            });
+
+            try { localStorage.setItem("wa_demo_lang", lang); } catch (e) {}
+
+            if (window.WhatsAppFloatingConfig) {
+                window.WhatsAppFloatingConfig.message = dict.message;
+                updateConfigPreview();
+            }
+
+            if (window.WhatsAppFloating && window.WhatsAppFloating.isReady()) {
+                window.WhatsAppFloating.reload({ message: dict.message });
+            }
+        }
+
+        var currentLang = detectInitialLang();
+
+        document.querySelectorAll(".lang-switch button").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                currentLang = btn.getAttribute("data-lang");
+                applyLang(currentLang);
+            });
+        });
+
+        applyLang(currentLang);
+
+        function appendLog(line) {
+            var el = document.getElementById("log");
+            var time = new Date().toLocaleTimeString();
+            el.textContent += "[" + time + "] " + line + "\n";
+            el.scrollTop = el.scrollHeight;
+        }
+
+        window.WhatsAppFloatingConfig = {
+            debug: true,
+            production: false,
+
+            message: I18N[currentLang].message,
+
+            // No `images` override here on purpose: the library falls back to
+            // `${assetsBaseUrl}/whatsapp-desktop.png` and `whatsapp-mobile.png`.
+            assetsBaseUrl: "./assets",
+
+            position: "bottom-right",
+            offset: { bottom: 20, right: 20 },
+
+            fallback: {
+                phone: "5511999999999"
+            },
+
+            pathRules: [
+                {
+                    path: "/promocao",
+                    phone: "5511900000000",
+                    images: {
+                        desktop: "./assets/whatsapp-desktop.png",
+                        mobile: "./assets/whatsapp-mobile.png"
+                    }
+                }
+            ],
+
+            rules: [
+                {
+                    country: "BR",
+                    state: "AM",
+                    cities: ["Manaus", "Manacapuru", "Iranduba"],
+                    phone: "5592999999999"
+                },
+                {
+                    country: "BR",
+                    state: "SP",
+                    numbers: [
+                        { phone: "5511988888888", weight: 2 },
+                        { phone: "5511977777777", weight: 1 }
+                    ],
+                    distribution: "weighted"
+                },
+                {
+                    country: "BR",
+                    numbers: [
+                        { phone: "5521911111111" },
+                        { phone: "5521922222222" },
+                        { phone: "5521933333333" }
+                    ],
+                    distribution: "roundrobin",
+                    schedule: {
+                        days: ["monday", "tuesday", "wednesday", "thursday", "friday"],
+                        hours: { start: "09:00", end: "18:00" }
+                    }
+                },
+                {
+                    country: "US",
+                    phone: "12025551234"
+                }
+            ],
+
+            onReady: function (payload) {
+                appendLog("onReady: " + JSON.stringify(payload));
+            },
+            onLocation: function (payload) {
+                appendLog("onLocation: " + JSON.stringify(payload));
+            },
+            onPhoneSelected: function (payload) {
+                appendLog("onPhoneSelected: " + JSON.stringify(payload));
+            },
+            onOpen: function (payload) {
+                appendLog("onOpen: " + JSON.stringify(payload));
+            },
+            onClose: function (payload) {
+                appendLog("onClose: " + JSON.stringify(payload));
+            }
+        };
+
+        updateConfigPreview();
+    </script>
+
+    <!-- Production usage: load the prebuilt bundle from jsDelivr (backed by npm). -->
+    <script src="https://cdn.jsdelivr.net/npm/whatsapp-floating@1/dist/whatsapp-floating.min.js"></script>
+
+    <script>
+        document.querySelectorAll("button[data-action]").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                var action = btn.getAttribute("data-action");
+                var result = window.WhatsAppFloating[action]();
+                if (result !== undefined) {
+                    appendLog(action + "() -> " + JSON.stringify(result));
+                } else {
+                    appendLog(action + "() called");
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+# Source & tooling — consumers get the prebuilt dist/ output only
+src/
+demo/
+types/
+.github/
+
+# Config
+tsconfig.json
+tsup.config.ts
+.gitignore
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+
+# Env
+.env
+.env.*
+
+# Misc project files not meant for the published package
+PROMPT.md
+*.tgz

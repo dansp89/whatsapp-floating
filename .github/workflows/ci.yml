@@ -1,0 +1,41 @@
+name: CI
+
+# Manual-only for now: automatic push/PR triggers are disabled because
+# GitHub Actions is blocked on this account (billing issue), so every
+# automatic run would just fail before doing anything. Trigger manually
+# via Actions -> CI -> "Run workflow" any time, or re-enable the `push`/
+# `pull_request` triggers below once Actions is unblocked.
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify dist output
+        run: |
+          test -f dist/whatsapp-floating.min.js
+          test -f dist/whatsapp-floating.global.js
+          test -f dist/whatsapp-floating.esm.js
+          test -f dist/whatsapp-floating.cjs.js
+          test -f dist/whatsapp-floating.d.ts

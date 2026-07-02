@@ -1,0 +1,67 @@
+{
+  "name": "whatsapp-floating",
+  "version": "1.0.0",
+  "description": "Dependency-free floating WhatsApp contact button with geolocation-based phone routing, business-hour scheduling, UTM/path rules and analytics integrations. Built for CDN delivery (jsDelivr/unpkg).",
+  "license": "MIT",
+  "author": "Sellvex <contato@sellvex.com.br> (https://sellvex.com.br)",
+  "homepage": "https://github.com/dansp89/whatsapp-floating#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dansp89/whatsapp-floating.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dansp89/whatsapp-floating/issues"
+  },
+  "keywords": [
+    "whatsapp",
+    "floating-button",
+    "geolocation",
+    "chat-widget",
+    "cdn",
+    "vanilla-js",
+    "typescript",
+    "sellvex"
+  ],
+  "main": "dist/whatsapp-floating.cjs.js",
+  "module": "dist/whatsapp-floating.esm.js",
+  "unpkg": "dist/whatsapp-floating.min.js",
+  "jsdelivr": "dist/whatsapp-floating.min.js",
+  "types": "dist/whatsapp-floating.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/whatsapp-floating.d.ts",
+      "import": "./dist/whatsapp-floating.esm.js",
+      "require": "./dist/whatsapp-floating.cjs.js",
+      "default": "./dist/whatsapp-floating.esm.js"
+    },
+    "./min": "./dist/whatsapp-floating.min.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": [
+    "dist/whatsapp-floating.min.js",
+    "dist/whatsapp-floating.global.js"
+  ],
+  "scripts": {
+    "build": "tsup && npm run fix:dts",
+    "fix:dts": "node -e \"const fs=require('fs');const src='dist/whatsapp-floating.esm.d.mts';const dest='dist/whatsapp-floating.d.ts';if(fs.existsSync(src)){fs.renameSync(src,dest);}\"",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
