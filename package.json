@@ -1,13 +1,13 @@
 {
   "name": "whatsapp-floating",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Dependency-free floating WhatsApp contact button with geolocation-based phone routing, business-hour scheduling, UTM/path rules and analytics integrations. Built for CDN delivery (jsDelivr/unpkg).",
   "license": "MIT",
   "author": "Sellvex <contato@sellvex.com.br> (https://sellvex.com.br)",
   "homepage": "https://github.com/dansp89/whatsapp-floating#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/dansp89/whatsapp-floating.git"
+    "url": "git+https://github.com/dansp89/whatsapp-floating.git"
   },
   "bugs": {
     "url": "https://github.com/dansp89/whatsapp-floating/issues"
@@ -39,6 +39,7 @@
   },
   "files": [
     "dist",
+    "docs/assets",
     "README.md",
     "LICENSE"
   ],

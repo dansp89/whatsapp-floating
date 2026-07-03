@@ -88,7 +88,7 @@ All properties are optional except where noted. Everything is set on `window.Wha
 | `appendUtmToMessage` | `boolean` | `false` | Appends detected `utm_*` query params to the message text. |
 | `ariaLabel` | `string` | `"WhatsApp"` | `aria-label` on the button link. |
 | `imageAlt` | `string` | `"WhatsApp"` | `alt` text on the `<img>`. |
-| `icon` | `string` (raw SVG markup) | built-in WhatsApp glyph | Used instead of an `<img>` when no image URL resolves. |
+| `icon` | `string` (raw SVG markup) | built-in WhatsApp glyph | Custom SVG used instead of an `<img>` when no image URL resolves. See also `iconVariant` (bundled icon set) and `pill` (icon + text button) under [Built-in icon variants](#built-in-icon-variants) and [Pill button](#pill-button-icon--text). |
 
 ### Images
 
@@ -226,14 +226,82 @@ Built-in fallback chain (tried in order until one succeeds): **ipapi.co → ipwh
 
 | Property | Type | Default | Description |
 |---|---|---|---|
-| `position` | `"bottom-right"\|"bottom-left"\|"top-right"\|"top-left"` | `"bottom-right"` | Corner the button is anchored to. |
-| `offset.top` / `.bottom` / `.left` / `.right` | `number \| string` | `16` (px) | Distance from the anchored corner. Numbers are treated as px; strings accept any CSS length (`"5%"`, `"2rem"`). |
+| `position` | `"bottom-right"\|"bottom-left"\|"top-right"\|"top-left"\|"custom"` | `"bottom-right"` | Corner the button is anchored to. Use `"custom"` to control each side independently via `offset` (see below). |
+| `offset.top` / `.bottom` / `.left` / `.right` | `number \| string` | `25` (px) | Distance from the anchored corner. Numbers are treated as px; strings accept any CSS length (`"5%"`, `"2rem"`). With `position: "custom"`, every side you set in `offset` is applied as-is — e.g. `{ top: 24, left: "10%" }` anchors to the top-left using independently chosen values instead of being locked to one of the four corner presets. |
 | `mobileBreakpoint` | `number` | `768` | Viewport width (px) at/below which mobile is assumed. |
 | `zIndex` | `number` | `2147483647` | Stacking order. |
-| `theme.dark` | `boolean` | `false` | Applies a heavier drop shadow suited for dark backgrounds. |
+| `theme.iconSize` | `number \| string` | `64px` | Icon/image height on desktop. Always has a default and is always responsive — see `iconSizeMobile`. |
+| `theme.iconSizeMobile` | `number \| string` | `56px` | Icon/image height at/below `mobileBreakpoint`. Defaults independently of `iconSize`, so setting only one still yields a proportionally-adjusted mobile size instead of an unresponsive fixed size. |
+| `theme.shadow` | `boolean` | `false` | Adds a drop shadow behind the image. Off by default — the bundled icons never draw their own border/shadow, and most custom images (banners, themed icons) already ship with their own design. |
+| `theme.rounded` | `boolean` | `false` | Rounds the image's corners. Off by default for the same reason. |
+| `theme.dark` | `boolean` | `false` | When combined with `theme.shadow`, uses a heavier shadow suited for dark backgrounds. |
 | `css` | `string` | — | Raw CSS appended after the library's own styles, for custom tweaks. |
 
-Mobile is detected when `window.innerWidth <= mobileBreakpoint` **or** the URL path contains `/mobile`. The button image never exceeds `90vw` in either dimension.
+Mobile is detected when `window.innerWidth <= mobileBreakpoint` **or** the URL path contains `/mobile`. The button image never exceeds `90vw` in either dimension and keeps its natural aspect ratio — no cropping, no forced circle/square.
+
+### Pulse animation
+
+```js
+theme: { pulse: true }
+// or, fully configured:
+theme: {
+  pulse: {
+    scale: true,       // icon "breathing" scale animation
+    ring: true,         // expanding colored ring/halo
+    duration: 1800,      // ms per cycle
+    scaleAmount: 1.08,   // peak scale factor for the breathing effect
+    color: "#25D366",    // ring color
+    opacity: 0.55         // ring starting opacity
+  }
+}
+```
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `theme.pulse` | `boolean \| PulseConfig` | `false` | `true` enables the icon scale/"breathing" animation with default timing — equivalent to `{ scale: true }`. Pass an object to also enable the ring/halo effect or tune timing/appearance. |
+| `pulse.scale` | `boolean` | `true` when `pulse` is set at all | Icon scale ("breathing") animation. |
+| `pulse.ring` | `boolean` | `false` | Expanding colored ring/halo around the button, independent of `scale` — enable either, both, or neither. |
+| `pulse.duration` | `number` (ms) | `1800` | Animation cycle length, shared by both effects. |
+| `pulse.scaleAmount` | `number` | `1.08` | Peak scale factor for the breathing effect. |
+| `pulse.color` | `string` | `"#25D366"` | Ring color. |
+| `pulse.opacity` | `number` | `0.55` | Ring starting opacity (fades to `0` as it expands). |
+
+### Built-in icon variants
+
+No image hosting required — pick a bundled, dependency-free SVG icon by name. None of them draw a border, outline or shadow of their own (that stays fully opt-in via `theme.shadow`/`theme.rounded` above).
+
+```js
+iconVariant: "roundedSquare"
+```
+
+| Key | Description |
+|---|---|
+| `"solid"` | The library's default circular WhatsApp glyph (used automatically if you set nothing at all). |
+| `"roundedSquare"` | Same glyph on a rounded-square background. |
+| `"flat"` | Larger circular glyph, flush edge-to-edge. |
+| `"mono"` | Circular glyph on a dark/neutral background instead of WhatsApp green. |
+
+`iconVariant` is ignored when `images`/`assetsBaseUrl` resolve to an actual image URL (images always win), and when `pill` is set (see below). An explicit `icon` (raw custom SVG string) still wins over `iconVariant`.
+
+### Pill button (icon + text)
+
+Renders an icon-and-text pill instead of an image/icon — no image hosting needed, matches your own call-to-action copy. Picking `pill` is an **exclusive** button style: when set, `images`, `assetsBaseUrl`, `icon` and `iconVariant` are all ignored entirely.
+
+```js
+pill: {
+  text: "Fale conosco",
+  expand: "hover",     // "hover" | "always" | "click" | "never"
+  icon: "solid"          // any built-in icon variant key, defaults to "solid"
+}
+```
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `pill.text` | `string` | — (required) | The label shown next to the icon. |
+| `pill.expand` | `"hover"\|"always"\|"click"\|"never"` | `"hover"` | `"hover"` expands on mouse hover, collapsing back to icon-only otherwise (desktop-friendly). `"always"` stays expanded. `"click"` — the first click/tap only reveals the label (no navigation, no `open` event); the next click opens WhatsApp normally. `"never"` stays icon-only forever; the text is still set as the accessible label. |
+| `pill.icon` | icon variant key or custom SVG string | `"solid"` | Icon shown inside the pill — same choices as `iconVariant` above. |
+
+`ariaLabel` still wins if explicitly set; otherwise the pill's `aria-label` defaults to `pill.text` (more descriptive than the generic "WhatsApp" fallback used elsewhere).
 
 ### Analytics
 

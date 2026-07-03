@@ -1,3 +1,5 @@
+import type { IconVariantKey } from "./icons";
+
 export interface ImagesConfig {
     desktop?: string;
     mobile?: string;
@@ -86,15 +88,68 @@ export interface FallbackConfig {
     distribution?: DistributionStrategy;
 }
 
+export interface PulseConfig {
+    /** Icon "breathing" scale animation. Defaults to `true` whenever `theme.pulse` is set at all. */
+    scale?: boolean;
+    /** Colored expanding ring/halo around the button. Off by default. */
+    ring?: boolean;
+    /** Animation cycle length, in ms. Default `1800`. */
+    duration?: number;
+    /** Peak scale factor for the breathing effect. Default `1.08`. */
+    scaleAmount?: number;
+    /** Ring color. Default `"#25D366"`. */
+    color?: string;
+    /** Ring starting opacity. Default `0.55`. */
+    opacity?: number;
+}
+
 export interface ThemeConfig {
     dark?: boolean;
+    /** Adds a drop shadow behind the button image. Off by default — most images (banners, custom icons) already have their own design. */
+    shadow?: boolean;
+    /** Rounds the button image's corners. Off by default, for the same reason as `shadow`. */
+    rounded?: boolean;
+    /**
+     * Makes the button pulse to draw attention. `true` enables the icon
+     * scale/"breathing" animation with default timing (equivalent to
+     * `{ scale: true }`). Pass a `PulseConfig` object to also enable the
+     * ring/halo effect or tune duration, scale amount, color and opacity.
+     */
+    pulse?: boolean | PulseConfig;
+    /**
+     * Icon/image height on desktop. Accepts px (number) or any CSS length.
+     * Always has a sane default (`64px`) and is always responsive — see `iconSizeMobile`.
+     */
+    iconSize?: CssOffset;
+    /** Icon/image height at/below `mobileBreakpoint`. Defaults to `56px`, or to `iconSize` if you only want one fixed size everywhere. */
+    iconSizeMobile?: CssOffset;
     [key: string]: unknown;
+}
+
+/**
+ * Renders a pill-shaped button — an icon plus a text label — instead of an
+ * image or bare icon. Picking `pill` is an exclusive button style: when
+ * present, `images`/`assetsBaseUrl`/`icon`/`iconVariant` at the top level
+ * are ignored entirely (use `pill.icon` to choose the icon shown inside it).
+ */
+export interface PillConfig {
+    text: string;
+    /**
+     * How the text label expands relative to the icon:
+     * - `"hover"` (default) — expands on mouse hover, collapses back to icon-only otherwise.
+     * - `"always"` — always expanded.
+     * - `"click"` — first click/tap expands it; the next click opens WhatsApp.
+     * - `"never"` — stays icon-only; the text is still set as the accessible label.
+     */
+    expand?: "hover" | "always" | "click" | "never";
+    /** Icon shown inside the pill. Defaults to the `"solid"` built-in variant. */
+    icon?: IconVariantKey | (string & {});
 }
 
 /** Number = pixels. String accepts any valid CSS length, e.g. "5%", "2rem", "16px". */
 export type CssOffset = number | string;
 
-export type PositionKeyword = "bottom-right" | "bottom-left" | "top-right" | "top-left";
+export type PositionKeyword = "bottom-right" | "bottom-left" | "top-right" | "top-left" | "custom";
 
 export interface OffsetConfig {
     top?: CssOffset;
@@ -174,6 +229,10 @@ export interface WhatsAppFloatingConfig {
      */
     assetsBaseUrl?: string;
     icon?: string;
+    /** Built-in icon to use instead of `icon`/an image. See `PillConfig.icon` for the same choices used inside a pill. Ignored when `images`/`assetsBaseUrl` resolve to a URL, and when `pill` is set. */
+    iconVariant?: IconVariantKey | (string & {});
+    /** Renders a pill-shaped icon+text button instead of an image/icon. Exclusive of `images`/`icon`/`iconVariant`. */
+    pill?: PillConfig;
     ariaLabel?: string;
     imageAlt?: string;
 

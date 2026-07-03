@@ -11,8 +11,9 @@ import { fetchGeoLocation } from "./geo";
 import { resolvePhone } from "./rules";
 import { trackEvent } from "./analytics";
 import { DEFAULT_ICON_SVG, injectStyles } from "./styles";
+import { ICON_VARIANTS, type IconVariantKey } from "./icons";
 
-const VERSION = "1.0.0";
+const VERSION = "1.1.0";
 const DEFAULT_DESKTOP_ASSET = "whatsapp-desktop.png";
 const DEFAULT_MOBILE_ASSET = "whatsapp-mobile.png";
 
@@ -31,6 +32,8 @@ export class WhatsAppFloatingWidget {
     private ruleImages: ImagesConfig | undefined;
     /** Explicit programmatic override set via setImages(), takes precedence over everything. */
     private manualImages: ImagesConfig | undefined;
+    /** Whether a `pill` button with `expand: "click"` is currently expanded. */
+    private pillExpanded = false;
 
     private emit(name: EventName, detail: unknown): void {
         const config = this.config;
@@ -182,6 +185,16 @@ export class WhatsAppFloatingWidget {
         const config = this.config;
         if (!config) return {};
 
+        if (config.assetsBaseUrl && /\.(png|jpe?g|gif|webp|svg)$/i.test(config.assetsBaseUrl)) {
+            log(
+                config,
+                "warn",
+                `assetsBaseUrl "${config.assetsBaseUrl}" looks like a file, not a folder — ` +
+                    `it will have "/${DEFAULT_DESKTOP_ASSET}" appended to it, which is almost certainly not what you want. ` +
+                    "Use config.images.desktop/mobile instead to point directly at a specific image file."
+            );
+        }
+
         const defaultBase = config.assetsBaseUrl ? config.assetsBaseUrl.replace(/\/+$/, "") : "";
         const defaults: ImagesConfig = defaultBase
             ? { desktop: `${defaultBase}/${DEFAULT_DESKTOP_ASSET}`, mobile: `${defaultBase}/${DEFAULT_MOBILE_ASSET}` }
@@ -249,18 +262,31 @@ export class WhatsAppFloatingWidget {
 
         this.destroy(true);
         injectStyles(config);
+        this.pillExpanded = false;
 
-        const imageUrl = this.resolveImage();
+        const isPill = !!config.pill?.text;
+        // Pill is an exclusive button style: when set, images/icon/iconVariant
+        // are never consulted, so there's nothing to preload/resolve for them.
+        const imageUrl = isPill ? undefined : this.resolveImage();
         if (imageUrl) this.preloadImage(imageUrl);
 
         const link = document.createElement("a");
-        link.className = "wa-floating-btn";
+        link.className = isPill ? "wa-floating-btn wa-floating-pill" : "wa-floating-btn";
         link.setAttribute("href", this.buildLink());
         link.setAttribute("target", "_blank");
         link.setAttribute("rel", "noopener noreferrer");
-        link.setAttribute("aria-label", config.ariaLabel || "WhatsApp");
+        link.setAttribute("aria-label", config.ariaLabel || config.pill?.text || "WhatsApp");
 
-        if (imageUrl) {
+        if (isPill) {
+            const iconWrap = document.createElement("span");
+            iconWrap.className = "wa-floating-pill-icon";
+            iconWrap.innerHTML = ICON_VARIANTS[config.pill?.icon as IconVariantKey] || ICON_VARIANTS.solid;
+            const textWrap = document.createElement("span");
+            textWrap.className = "wa-floating-pill-text";
+            textWrap.textContent = config.pill?.text ?? "";
+            link.appendChild(iconWrap);
+            link.appendChild(textWrap);
+        } else if (imageUrl) {
             const img = document.createElement("img");
             // The button image is always above the fold and must appear
             // immediately — eager + async decoding avoids both a blank
@@ -272,10 +298,21 @@ export class WhatsAppFloatingWidget {
             img.src = imageUrl;
             link.appendChild(img);
         } else {
-            link.innerHTML = config.icon || DEFAULT_ICON_SVG;
+            link.innerHTML = config.icon || ICON_VARIANTS[config.iconVariant as IconVariantKey] || DEFAULT_ICON_SVG;
         }
 
-        link.addEventListener("click", () => {
+        link.addEventListener("click", (e) => {
+            // A pill with expand:"click" needs two distinct taps: the first
+            // only reveals the text label (no navigation, no open event —
+            // the visitor hasn't chosen to contact yet), the second behaves
+            // exactly like every other click. One handler with an early
+            // return keeps this simple instead of juggling two listeners.
+            if (isPill && config.pill?.expand === "click" && !this.pillExpanded) {
+                e.preventDefault();
+                this.pillExpanded = true;
+                link.classList.add("wa-floating-expanded");
+                return;
+            }
             this.emit("open", { phone: this.phone });
             trackEvent(config, "open", { phone: this.phone, matched: this.matched });
         });
