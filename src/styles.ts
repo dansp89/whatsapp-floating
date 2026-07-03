@@ -122,7 +122,7 @@ export function injectStyles(config: WhatsAppFloatingConfig): void {
         `.wa-floating-btn svg{width:${iconSizeMobile};height:${iconSizeMobile};}` +
         `}` +
         (theme.rounded ? `.wa-floating-btn img,.wa-floating-btn svg{border-radius:12px;}` : "") +
-        (theme.shadow ? `.wa-floating-btn img,.wa-floating-btn svg{box-shadow:0 4px 16px rgba(0,0,0,.25);}` : "") +
+        (theme.shadow ? `.wa-floating-btn img,.wa-floating-btn` : "") +
         (theme.shadow && theme.dark ? `.wa-floating-btn img,.wa-floating-btn svg{box-shadow:0 4px 20px rgba(0,0,0,.6);}` : "") +
         // Pulse "scale" animates the image/icon itself (not the
         // .wa-floating-btn link), so it never fights with the
