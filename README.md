@@ -1,10 +1,19 @@
 # WhatsApp Floating
 
+[![npm version](https://img.shields.io/npm/v/whatsapp-floating.svg)](https://www.npmjs.com/package/whatsapp-floating)
+[![npm downloads](https://img.shields.io/npm/dm/whatsapp-floating.svg)](https://www.npmjs.com/package/whatsapp-floating)
+[![minzipped size](https://img.shields.io/bundlephobia/minzip/whatsapp-floating)](https://bundlephobia.com/package/whatsapp-floating)
+[![jsDelivr hits](https://img.shields.io/jsdelivr/npm/hm/whatsapp-floating)](https://www.jsdelivr.com/package/npm/whatsapp-floating)
+[![license](https://img.shields.io/npm/l/whatsapp-floating.svg)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-ready-3178C6?logo=typescript&logoColor=white)](dist/whatsapp-floating.d.ts)
+
 A dependency-free, TypeScript-built floating WhatsApp contact button. Drop one `<script>` tag on your site and it automatically picks the right phone number for each visitor based on geolocation, business hours, URL path, UTM campaign, language, referrer and more — then renders a floating button, no HTML required.
 
 Built by **[Sellvex](https://sellvex.com.br)**.
 
 **[Live demo (English / Português)](https://dansp89.github.io/whatsapp-floating/)** — a working page with the floating button, live event log, and every public API method wired to a button.
+
+[![WhatsApp Floating demo — code generator with live preview](docs/screenshot.png)](https://dansp89.github.io/whatsapp-floating/)
 
 - **Zero dependencies** — no jQuery, no React, no build step required to use it.
 - **Zero global pollution** — only `window.WhatsAppFloatingConfig` (input) and `window.WhatsAppFloating` (API) are created.
