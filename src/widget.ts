@@ -13,7 +13,7 @@ import { trackEvent } from "./analytics";
 import { DEFAULT_ICON_SVG, injectStyles } from "./styles";
 import { ICON_VARIANTS, type IconVariantKey } from "./icons";
 
-const VERSION = "1.1.0";
+const VERSION = "1.2.0";
 const DEFAULT_DESKTOP_ASSET = "whatsapp-desktop.png";
 const DEFAULT_MOBILE_ASSET = "whatsapp-mobile.png";
 
@@ -34,6 +34,8 @@ export class WhatsAppFloatingWidget {
     private manualImages: ImagesConfig | undefined;
     /** Whether a `pill` button with `expand: "click"` is currently expanded. */
     private pillExpanded = false;
+    /** Incremented each time init() is called — lets a stale async start() detect it was superseded. */
+    private initGen = 0;
 
     private emit(name: EventName, detail: unknown): void {
         const config = this.config;
@@ -108,6 +110,8 @@ export class WhatsAppFloatingWidget {
             lazyLoad: false,
         };
 
+        const gen = ++this.initGen;
+
         let config = merge(defaultConfig, userConfig || {});
         this.config = config;
 
@@ -118,6 +122,13 @@ export class WhatsAppFloatingWidget {
             const ctx = this.buildContext();
 
             const location = await fetchGeoLocation(config);
+
+            // A newer init() was called while we were awaiting geo — abort
+            // this render so the newer one wins and we don't clobber it.
+            if (gen !== this.initGen) {
+                return { phone: null, matched: "Fallback", rule: null };
+            }
+
             this.location = location;
             ctx.continent = getContinent(location.country);
 
@@ -281,6 +292,24 @@ export class WhatsAppFloatingWidget {
             const iconWrap = document.createElement("span");
             iconWrap.className = "wa-floating-pill-icon";
             iconWrap.innerHTML = ICON_VARIANTS[config.pill?.icon as IconVariantKey] || ICON_VARIANTS.solid;
+            // Bundled icons embed their own background shape (circle/rect/path)
+            // via inline fill attributes. Inside a pill that already has its own
+            // background color, that creates a nested colored shape. Strip the
+            // background fill by manipulating the DOM directly — CSS cannot
+            // override inline SVG fill attributes without !important hacks.
+            const svg = iconWrap.querySelector("svg");
+            if (svg) {
+                // width/height="100%" on bundled SVGs resolves relative to the
+                // viewport, not the icon wrap — remove them so the CSS rule
+                // (.wa-floating-pill-icon svg { width:60%!important }) takes over.
+                svg.removeAttribute("width");
+                svg.removeAttribute("height");
+                const bg = svg.firstElementChild;
+                if (bg) bg.setAttribute("fill", "transparent");
+                const paths = svg.querySelectorAll("path");
+                const glyph = paths[paths.length - 1];
+                if (glyph) glyph.setAttribute("fill", config.pill?.textColor || "#ffffff");
+            }
             const textWrap = document.createElement("span");
             textWrap.className = "wa-floating-pill-text";
             textWrap.textContent = config.pill?.text ?? "";
@@ -299,6 +328,15 @@ export class WhatsAppFloatingWidget {
             link.appendChild(img);
         } else {
             link.innerHTML = config.icon || ICON_VARIANTS[config.iconVariant as IconVariantKey] || DEFAULT_ICON_SVG;
+            // width="100%" on the bundled SVGs resolves to the viewport width,
+            // not the link element — the CSS height:64px;width:auto rule then
+            // can't centre it. Remove both attributes so the browser derives
+            // the size purely from viewBox + CSS, which gives a square icon.
+            const svg = link.querySelector("svg");
+            if (svg) {
+                svg.removeAttribute("width");
+                svg.removeAttribute("height");
+            }
         }
 
         link.addEventListener("click", (e) => {

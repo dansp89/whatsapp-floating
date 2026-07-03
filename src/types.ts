@@ -142,8 +142,26 @@ export interface PillConfig {
      * - `"never"` — stays icon-only; the text is still set as the accessible label.
      */
     expand?: "hover" | "always" | "click" | "never";
+    /**
+     * Override `expand` on mobile (at/below `mobileBreakpoint`).
+     * Useful for "hover on desktop, always on mobile" patterns.
+     * Falls back to `expand` when not set.
+     */
+    expandMobile?: "hover" | "always" | "click" | "never";
     /** Icon shown inside the pill. Defaults to the `"solid"` built-in variant. */
     icon?: IconVariantKey | (string & {});
+    /** Pill background color. Defaults to `"#25D366"` (WhatsApp green). */
+    color?: string;
+    /** Pill text color. Defaults to `"#ffffff"`. */
+    textColor?: string;
+    /** Font size of the label in px. Defaults to `14`. */
+    fontSize?: number;
+    /** Font weight. Defaults to `600`. */
+    fontWeight?: number | string;
+    /** Extra horizontal padding between icon and text right edge, in px. Defaults to `18`. */
+    paddingRight?: number;
+    /** Border radius of the pill in px. Defaults to `999` (fully rounded). */
+    borderRadius?: number;
 }
 
 /** Number = pixels. String accepts any valid CSS length, e.g. "5%", "2rem", "16px". */

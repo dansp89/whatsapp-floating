@@ -71,6 +71,15 @@ export function injectStyles(config: WhatsAppFloatingConfig): void {
 
     const pill = config.pill;
     const pillExpand = pill?.expand || "hover";
+    // expandMobile falls back to expand when not explicitly set
+    const pillExpandMobile = pill?.expandMobile ?? pillExpand;
+    const pillColor = pill?.color || "#25D366";
+    const pillTextColor = pill?.textColor || "#ffffff";
+    const pillFontSize = pill?.fontSize ?? 14;
+    const pillFontWeight = pill?.fontWeight ?? 600;
+    const pillPaddingRight = pill?.paddingRight ?? 18;
+    const pillBorderRadius = pill?.borderRadius ?? 999;
+    const mobileBreakpoint = config.mobileBreakpoint || 768;
 
     const css =
         `.wa-floating-btn{` +
@@ -101,14 +110,17 @@ export function injectStyles(config: WhatsAppFloatingConfig): void {
         // with an extra frame/shadow just adds an unwanted halo around it.
         // Opt in via theme.rounded / theme.shadow if the asset is a plain
         // square icon that benefits from one.
-        `.wa-floating-btn img,.wa-floating-btn svg{` +
-        `max-width:90vw;` +
-        `max-height:90vw;` +
-        `height:${iconSize};` +
-        `width:auto;` +
-        `display:block;` +
+        // img: width:auto preserves aspect ratio for rectangular banners.
+        // svg: explicit equal width+height so a square viewBox fills the button
+        //      without overflowing — width:auto on a viewBox="0 0 32 32" SVG
+        //      without inline width/height attributes resolves to the viewport
+        //      width, not the icon size, causing the icon to be clipped.
+        `.wa-floating-btn img{max-width:90vw;max-height:90vw;height:${iconSize};width:auto;display:block;}` +
+        `.wa-floating-btn svg{width:${iconSize};height:${iconSize};display:block;flex-shrink:0;}` +
+        `@media(max-width:768px){` +
+        `.wa-floating-btn img{height:${iconSizeMobile};}` +
+        `.wa-floating-btn svg{width:${iconSizeMobile};height:${iconSizeMobile};}` +
         `}` +
-        `@media(max-width:768px){.wa-floating-btn img,.wa-floating-btn svg{height:${iconSizeMobile};}}` +
         (theme.rounded ? `.wa-floating-btn img,.wa-floating-btn svg{border-radius:12px;}` : "") +
         (theme.shadow ? `.wa-floating-btn img,.wa-floating-btn svg{box-shadow:0 4px 16px rgba(0,0,0,.25);}` : "") +
         (theme.shadow && theme.dark ? `.wa-floating-btn img,.wa-floating-btn svg{box-shadow:0 4px 20px rgba(0,0,0,.6);}` : "") +
@@ -136,26 +148,51 @@ export function injectStyles(config: WhatsAppFloatingConfig): void {
         // `.wa-floating-pill` is actually present on the link.
         (pill
             ? `.wa-floating-btn.wa-floating-pill{` +
-              `display:inline-flex;align-items:center;border-radius:999px;` +
-              `background:#25D366;overflow:hidden;max-width:${iconSize};` +
+              `display:inline-flex;align-items:center;justify-content:flex-start;border-radius:${pillBorderRadius}px;` +
+              `background:${pillColor};overflow:hidden;max-width:${iconSize};` +
               `transition:max-width .3s ease;white-space:nowrap;}` +
-              `@media(max-width:768px){.wa-floating-btn.wa-floating-pill{max-width:${iconSizeMobile};}}` +
+              `@media(max-width:${mobileBreakpoint}px){.wa-floating-btn.wa-floating-pill{max-width:${iconSizeMobile};}}` +
               `.wa-floating-pill-icon{flex:none;width:${iconSize};height:${iconSize};` +
               `display:flex;align-items:center;justify-content:center;}` +
-              `@media(max-width:768px){.wa-floating-pill-icon{width:${iconSizeMobile};height:${iconSizeMobile};}}` +
-              `.wa-floating-pill-icon svg{width:68%;height:68%;}` +
-              `.wa-floating-pill-text{opacity:0;transition:opacity .2s ease .1s;padding-right:18px;` +
-              `color:#fff;font:600 14px/1.3 -apple-system,BlinkMacSystemFont,sans-serif;}` +
+              `@media(max-width:${mobileBreakpoint}px){.wa-floating-pill-icon{width:${iconSizeMobile};height:${iconSizeMobile};}}` +
+              `.wa-floating-pill-icon svg{width:60%!important;height:60%!important;max-width:none!important;max-height:none!important;display:block!important;}` +
+              `.wa-floating-pill-icon svg>:first-child{fill:transparent;}` +
+              `.wa-floating-pill-icon svg path:last-of-type{fill:${pillTextColor};}` +
+              `.wa-floating-pill-text{opacity:0;transition:opacity .2s ease .1s;padding-right:${pillPaddingRight}px;` +
+              `color:${pillTextColor};font:${pillFontWeight} ${pillFontSize}px/1.3 -apple-system,BlinkMacSystemFont,sans-serif;}` +
+              // Desktop expand rules (above mobileBreakpoint)
               (pillExpand === "hover"
-                  ? `.wa-floating-btn.wa-floating-pill:hover{max-width:320px;}` +
-                    `.wa-floating-btn.wa-floating-pill:hover .wa-floating-pill-text{opacity:1;}`
+                  ? `@media(min-width:${mobileBreakpoint + 1}px){` +
+                    `.wa-floating-btn.wa-floating-pill:hover{max-width:320px;}` +
+                    `.wa-floating-btn.wa-floating-pill:hover .wa-floating-pill-text{opacity:1;}}`
                   : "") +
               (pillExpand === "always"
-                  ? `.wa-floating-btn.wa-floating-pill{max-width:320px;}.wa-floating-pill-text{opacity:1;}`
+                  ? `@media(min-width:${mobileBreakpoint + 1}px){` +
+                    `.wa-floating-btn.wa-floating-pill{max-width:320px;}` +
+                    `.wa-floating-pill-text{opacity:1;}}`
                   : "") +
               (pillExpand === "click"
-                  ? `.wa-floating-btn.wa-floating-pill.wa-floating-expanded{max-width:320px;}` +
-                    `.wa-floating-btn.wa-floating-pill.wa-floating-expanded .wa-floating-pill-text{opacity:1;}`
+                  ? `@media(min-width:${mobileBreakpoint + 1}px){` +
+                    `.wa-floating-btn.wa-floating-pill.wa-floating-expanded{max-width:320px;}` +
+                    `.wa-floating-btn.wa-floating-pill.wa-floating-expanded .wa-floating-pill-text{opacity:1;}}`
+                  : "") +
+              // Mobile expand rules (at/below mobileBreakpoint) — only emitted
+              // when expandMobile differs from expand, avoiding duplicate CSS.
+              (pillExpandMobile !== pillExpand || pillExpand === "never" ? `` : ``) +
+              (pillExpandMobile === "hover"
+                  ? `@media(max-width:${mobileBreakpoint}px){` +
+                    `.wa-floating-btn.wa-floating-pill:hover{max-width:320px;}` +
+                    `.wa-floating-btn.wa-floating-pill:hover .wa-floating-pill-text{opacity:1;}}`
+                  : "") +
+              (pillExpandMobile === "always"
+                  ? `@media(max-width:${mobileBreakpoint}px){` +
+                    `.wa-floating-btn.wa-floating-pill{max-width:320px;}` +
+                    `.wa-floating-pill-text{opacity:1;}}`
+                  : "") +
+              (pillExpandMobile === "click"
+                  ? `@media(max-width:${mobileBreakpoint}px){` +
+                    `.wa-floating-btn.wa-floating-pill.wa-floating-expanded{max-width:320px;}` +
+                    `.wa-floating-btn.wa-floating-pill.wa-floating-expanded .wa-floating-pill-text{opacity:1;}}`
                   : "")
             : "") +
         (config.css || "");

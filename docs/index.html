@@ -377,6 +377,51 @@
         background: var(--panel);
         color: var(--muted);
     }
+    .icon-gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+        gap: 10px;
+    }
+    .icon-swatch {
+        border: 2px solid var(--border);
+        background: #fff;
+        border-radius: 12px;
+        padding: 10px 8px;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        min-height: 80px;
+        box-sizing: border-box;
+        transition: border-color .15s, background .15s, transform .1s;
+    }
+    .icon-swatch:hover { transform: scale(1.04); border-color: var(--brand); }
+    .icon-swatch .icon-img {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .icon-swatch .icon-img svg {
+        width: 48px !important;
+        height: 48px !important;
+        display: block;
+        flex-shrink: 0;
+    }
+    .icon-swatch span { font-size: 0.65rem; color: var(--muted); text-align: center; line-height: 1.2; }
+    .icon-swatch.active { border-color: var(--brand); background: #f0fdf4; }
+    /* Hide pulse ring/halo fields in pill mode — belt-and-suspenders over the JS visibility toggle */
+    body[data-image-mode="pill"] #pulse-ring-field,
+    body[data-image-mode="pill"] #pulse-color-field { display: none !important; }
+    /* Pill icon gallery: green background, stripped icon bg so glyph floats on green */
+    #pill-icon-gallery .icon-swatch { background: #25D366; border-color: #1aad55; }
+    #pill-icon-gallery .icon-swatch:hover { background: #20c05a; }
+    #pill-icon-gallery .icon-swatch.active { background: #128C7E; border-color: #0e6b5e; }
+    #pill-icon-gallery .icon-swatch span { color: rgba(255,255,255,.85); }
     .weekday-picker {
         display: flex;
         flex-wrap: wrap;
@@ -442,6 +487,25 @@
         border-top: 1px solid var(--border);
         font-size: 0.85rem;
         color: var(--muted);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    .footer-links {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .footer-links a {
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        transition: color .15s ease;
+    }
+    .footer-links a:hover {
+        color: var(--accent);
     }
 </style>
 </head>
@@ -556,6 +620,8 @@
                         <label for="f-image-mode" data-i18n="imageModeLabel">Button image</label>
                         <select id="f-image-mode">
                             <option value="default" data-i18n="imageModeDefault">Library default (served from the selected CDN)</option>
+                            <option value="icon" data-i18n="imageModeIcon">Built-in icon</option>
+                            <option value="pill" data-i18n="imageModePill">Pill (icon + text)</option>
                             <option value="folder" data-i18n="imageModeFolder">Custom folder (whatsapp-desktop.png / whatsapp-mobile.png)</option>
                             <option value="urls" data-i18n="imageModeUrls">Specific image URLs</option>
                         </select>
@@ -582,10 +648,110 @@
                         <span class="hint" data-i18n="imageUrlsHint">Full URL to each image file — used exactly as entered, nothing appended.</span>
                     </div>
 
+                    <div class="field" id="icon-variant-field" style="display:none;">
+                        <label data-i18n="iconVariantLabel">Icon style</label>
+                        <div class="icon-gallery" id="icon-gallery" role="radiogroup"></div>
+                    </div>
+
+                    <div class="field" id="pill-field" style="display:none;">
+                        <div class="field">
+                            <label for="f-pill-text" data-i18n="pillTextLabel">Button text</label>
+                            <input type="text" id="f-pill-text" placeholder="Fale conosco" />
+                        </div>
+                        <div class="grid-2">
+                            <div class="field">
+                                <label for="f-pill-expand" data-i18n="pillExpandLabel">Desktop expand</label>
+                                <select id="f-pill-expand">
+                                    <option value="hover" data-i18n="pillExpandHover">On hover</option>
+                                    <option value="always" data-i18n="pillExpandAlways">Always expanded</option>
+                                    <option value="click" data-i18n="pillExpandClick">On click (opens on 2nd click)</option>
+                                    <option value="never" data-i18n="pillExpandNever">Never (icon only)</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label for="f-pill-expand-mobile" data-i18n="pillExpandMobileLabel">Mobile expand</label>
+                                <select id="f-pill-expand-mobile">
+                                    <option value="hover" data-i18n="pillExpandHover">On hover</option>
+                                    <option value="always" data-i18n="pillExpandAlways">Always expanded</option>
+                                    <option value="click" data-i18n="pillExpandClick">On click (opens on 2nd click)</option>
+                                    <option value="never" data-i18n="pillExpandNever">Never (icon only)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid-3">
+                            <div class="field">
+                                <label for="f-pill-color" data-i18n="pillColorLabel">Background color</label>
+                                <input type="color" id="f-pill-color" value="#25D366" />
+                            </div>
+                            <div class="field">
+                                <label for="f-pill-text-color" data-i18n="pillTextColorLabel">Text color</label>
+                                <input type="color" id="f-pill-text-color" value="#ffffff" />
+                            </div>
+                            <div class="field">
+                                <label for="f-pill-border-radius" data-i18n="pillBorderRadiusLabel">Border radius (px)</label>
+                                <input type="number" id="f-pill-border-radius" value="999" min="0" max="999" />
+                            </div>
+                        </div>
+                        <div class="grid-3">
+                            <div class="field">
+                                <label for="f-pill-font-size" data-i18n="pillFontSizeLabel">Font size (px)</label>
+                                <input type="number" id="f-pill-font-size" value="14" min="8" max="32" />
+                            </div>
+                            <div class="field">
+                                <label for="f-pill-font-weight" data-i18n="pillFontWeightLabel">Font weight</label>
+                                <select id="f-pill-font-weight">
+                                    <option value="400">400 — Regular</option>
+                                    <option value="500">500 — Medium</option>
+                                    <option value="600" selected>600 — Semi-bold</option>
+                                    <option value="700">700 — Bold</option>
+                                    <option value="800">800 — Extra-bold</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label for="f-pill-padding-right" data-i18n="pillPaddingRightLabel">Right padding (px)</label>
+                                <input type="number" id="f-pill-padding-right" value="18" min="0" max="64" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="field" id="icon-size-field" style="display:none;">
+                        <div class="grid-2">
+                            <div class="field">
+                                <label for="f-icon-size" data-i18n="iconSizeLabel">Icon size, desktop (px)</label>
+                                <input type="number" id="f-icon-size" value="64" min="16" />
+                            </div>
+                            <div class="field">
+                                <label for="f-icon-size-mobile" data-i18n="iconSizeMobileLabel">Icon size, mobile (px)</label>
+                                <input type="number" id="f-icon-size-mobile" value="56" min="16" />
+                            </div>
+                        </div>
+                    </div>
+
                     <label class="checkbox-row">
                         <input type="checkbox" id="f-pulse">
                         <span data-i18n="pulseToggleLabel">Pulse animation (draws attention to the button)</span>
                     </label>
+
+                    <div class="field" id="pulse-options-field" style="display:none;">
+                        <div class="grid-2">
+                            <label class="checkbox-row"><input type="checkbox" id="f-pulse-scale" checked><span data-i18n="pulseScaleLabel">Icon "breathing" scale</span></label>
+                            <label class="checkbox-row" id="pulse-ring-field"><input type="checkbox" id="f-pulse-ring"><span data-i18n="pulseRingLabel">Expanding ring / halo</span></label>
+                        </div>
+                        <div class="grid-3">
+                            <div class="field">
+                                <label for="f-pulse-duration" data-i18n="pulseDurationLabel">Duration (ms)</label>
+                                <input type="number" id="f-pulse-duration" value="1800" min="200" step="100" />
+                            </div>
+                            <div class="field">
+                                <label for="f-pulse-scale-amount" data-i18n="pulseScaleAmountLabel">Scale amount</label>
+                                <input type="number" id="f-pulse-scale-amount" value="1.08" min="1" max="2" step="0.01" />
+                            </div>
+                            <div class="field" id="pulse-color-field">
+                                <label for="f-pulse-color" data-i18n="pulseColorLabel">Ring color</label>
+                                <input type="text" id="f-pulse-color" value="#25D366" />
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="panel">
@@ -661,8 +827,16 @@
         <h2 data-i18n="eventsTitle">Events / Log</h2>
         <div id="log"></div>
 
-        <footer data-i18n="footer">
-            Built by <a href="https://sellvex.com.br" target="_blank" rel="noopener noreferrer">Sellvex</a> · MIT License
+        <footer>
+            <span data-i18n="footer">Built by <a href="https://sellvex.com.br" target="_blank" rel="noopener noreferrer">Sellvex</a> · MIT License</span>
+            <span class="footer-links">
+                <a href="https://github.com/dansp89/whatsapp-floating" target="_blank" rel="noopener noreferrer" aria-label="GitHub" title="GitHub">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.09-.745.083-.73.083-.73 1.205.085 1.84 1.237 1.84 1.237 1.07 1.834 2.807 1.304 3.492.997.108-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.93 0-1.31.468-2.38 1.235-3.22-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.3 1.23a11.5 11.5 0 0 1 3-.404c1.02.005 2.047.138 3 .404 2.29-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.91 1.235 3.22 0 4.61-2.807 5.625-5.479 5.92.43.372.823 1.102.823 2.222 0 1.604-.015 2.896-.015 3.286 0 .322.216.694.825.576C20.565 21.795 24 17.298 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                </a>
+                <a href="https://www.npmjs.com/package/whatsapp-floating" target="_blank" rel="noopener noreferrer" aria-label="npm" title="npm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M0 0v24h24V0H0zm6.672 19.996H1.34V4.004h22.66v15.992H13.33v-7.99h-3.327v7.99H6.672z"/></svg>
+                </a>
+            </span>
         </footer>
     </div>
 </div>
@@ -694,6 +868,20 @@
         '<tr><td><code>assetsBaseUrl</code></td><td>string (URL)</td><td>When <code>images</code> is not set, defaults to <code>${assetsBaseUrl}/whatsapp-desktop.png</code> and <code>whatsapp-mobile.png</code>.</td></tr>' +
         '</table>' +
         '<p class="hint">Resolution order (highest priority first): runtime <code>setImages()</code> → matching rule/path rule <code>images</code> → top-level <code>images</code> → <code>assetsBaseUrl</code> defaults. Images load with <code>loading="eager"</code>, <code>decoding="async"</code> and a preload hint — no lazy-load stall for above-the-fold UI.</p>' +
+
+        '<h3>Pill button — <code>pill</code></h3>' +
+        '<p>Renders an icon + text button instead of an image/icon. Exclusive of <code>images</code>, <code>assetsBaseUrl</code>, <code>icon</code> and <code>iconVariant</code>.</p>' +
+        '<table><tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>' +
+        '<tr><td><code>pill.text</code></td><td>string</td><td><em>required</em></td><td>Label shown next to the icon.</td></tr>' +
+        '<tr><td><code>pill.expand</code></td><td>"hover"|"always"|"click"|"never"</td><td>"hover"</td><td>When the text label is visible. "hover" reveals on mouse-over. "always" keeps it expanded. "click" reveals on 1st tap, opens WhatsApp on 2nd. "never" stays icon-only (text used as accessible label).</td></tr>' +
+        '<tr><td><code>pill.icon</code></td><td>icon key | SVG string</td><td>"solid"</td><td>Icon inside the pill — same choices as <code>iconVariant</code>.</td></tr>' +
+        '<tr><td><code>pill.color</code></td><td>string (CSS color)</td><td>"#25D366"</td><td>Pill background color.</td></tr>' +
+        '<tr><td><code>pill.textColor</code></td><td>string (CSS color)</td><td>"#ffffff"</td><td>Label text color.</td></tr>' +
+        '<tr><td><code>pill.fontSize</code></td><td>number (px)</td><td>14</td><td>Font size of the label.</td></tr>' +
+        '<tr><td><code>pill.fontWeight</code></td><td>number | string</td><td>600</td><td>CSS font-weight of the label (e.g. 400, 700).</td></tr>' +
+        '<tr><td><code>pill.paddingRight</code></td><td>number (px)</td><td>18</td><td>Horizontal padding between the label and the right edge.</td></tr>' +
+        '<tr><td><code>pill.borderRadius</code></td><td>number (px)</td><td>999</td><td>Border radius. Use 0 for square, 4–16 for rounded-rectangle, 999 for fully-rounded.</td></tr>' +
+        '</table>' +
 
         '<h3>Location rules — <code>rules[]</code></h3>' +
         '<p>Matching priority: <strong>City → State → Country → Fallback</strong>. Within each level, the first rule that matches wins.</p>' +
@@ -823,6 +1011,20 @@
         '<tr><td><code>assetsBaseUrl</code></td><td>string (URL)</td><td>Quando <code>images</code> não é definido, usa <code>${assetsBaseUrl}/whatsapp-desktop.png</code> e <code>whatsapp-mobile.png</code>.</td></tr>' +
         '</table>' +
         '<p class="hint">Ordem de resolução (maior prioridade primeiro): <code>setImages()</code> em runtime → <code>images</code> da regra/regra de caminho correspondente → <code>images</code> no nível raiz → padrões de <code>assetsBaseUrl</code>. As imagens carregam com <code>loading="eager"</code>, <code>decoding="async"</code> e uma dica de preload — sem atraso de lazy-load para UI acima da dobra.</p>' +
+
+        '<h3>Botão pílula — <code>pill</code></h3>' +
+        '<p>Renderiza um botão de ícone + texto em formato pílula em vez de uma imagem/ícone. Exclusivo de <code>images</code>, <code>assetsBaseUrl</code>, <code>icon</code> e <code>iconVariant</code>.</p>' +
+        '<table><tr><th>Propriedade</th><th>Tipo</th><th>Padrão</th><th>Descrição</th></tr>' +
+        '<tr><td><code>pill.text</code></td><td>string</td><td><em>obrigatório</em></td><td>Texto exibido ao lado do ícone.</td></tr>' +
+        '<tr><td><code>pill.expand</code></td><td>"hover"|"always"|"click"|"never"</td><td>"hover"</td><td>Quando o texto fica visível. "hover" revela ao passar o mouse. "always" permanece expandido. "click" revela no 1º toque, abre WhatsApp no 2º. "never" exibe apenas o ícone (texto usado como label acessível).</td></tr>' +
+        '<tr><td><code>pill.icon</code></td><td>chave de ícone | string SVG</td><td>"solid"</td><td>Ícone dentro da pílula — mesmas opções que <code>iconVariant</code>.</td></tr>' +
+        '<tr><td><code>pill.color</code></td><td>string (cor CSS)</td><td>"#25D366"</td><td>Cor de fundo da pílula.</td></tr>' +
+        '<tr><td><code>pill.textColor</code></td><td>string (cor CSS)</td><td>"#ffffff"</td><td>Cor do texto do rótulo.</td></tr>' +
+        '<tr><td><code>pill.fontSize</code></td><td>number (px)</td><td>14</td><td>Tamanho da fonte do rótulo.</td></tr>' +
+        '<tr><td><code>pill.fontWeight</code></td><td>number | string</td><td>600</td><td>CSS font-weight do rótulo (ex: 400, 700).</td></tr>' +
+        '<tr><td><code>pill.paddingRight</code></td><td>number (px)</td><td>18</td><td>Padding horizontal entre o rótulo e a borda direita.</td></tr>' +
+        '<tr><td><code>pill.borderRadius</code></td><td>number (px)</td><td>999</td><td>Border radius. Use 0 para quadrado, 4–16 para retângulo arredondado, 999 para totalmente redondo.</td></tr>' +
+        '</table>' +
 
         '<h3>Regras de localização — <code>rules[]</code></h3>' +
         '<p>Prioridade de correspondência: <strong>Cidade → Estado → País → Padrão</strong>. Em cada nível, a primeira regra que corresponder vence.</p>' +
@@ -963,6 +1165,8 @@
             genBreakpointLabel: "Mobile breakpoint (px)",
             imageModeLabel: "Button image",
             imageModeDefault: "Library default (served from the selected CDN)",
+            imageModeIcon: "Built-in icon",
+            imageModePill: "Pill (icon + text)",
             imageModeFolder: "Custom folder (whatsapp-desktop.png / whatsapp-mobile.png)",
             imageModeUrls: "Specific image URLs",
             genAssetsLabel: "Assets base URL",
@@ -971,7 +1175,29 @@
             imageMobileUrlLabel: "Mobile image URL",
             imageUrlsHint: "Full URL to each image file — used exactly as entered, nothing appended.",
             assetsUrlWarning: "⚠ This looks like a specific image file, not a folder — the library would append \"/whatsapp-desktop.png\" to it. Switch \"Button image\" above to \"Specific image URLs\" instead.",
+            iconVariantLabel: "Icon style",
+            pillTextLabel: "Button text",
+            pillExpandLabel: "Desktop expand",
+            pillExpandMobileLabel: "Mobile expand",
+            pillExpandHover: "On hover",
+            pillExpandAlways: "Always expanded",
+            pillExpandClick: "On click (opens on 2nd click)",
+            pillExpandNever: "Never (icon only)",
+            pillIconLabel: "Icon inside the pill",
+            pillColorLabel: "Background color",
+            pillTextColorLabel: "Text color",
+            pillBorderRadiusLabel: "Border radius (px)",
+            pillFontSizeLabel: "Font size (px)",
+            pillFontWeightLabel: "Font weight",
+            pillPaddingRightLabel: "Right padding (px)",
+            iconSizeLabel: "Icon size, desktop (px)",
+            iconSizeMobileLabel: "Icon size, mobile (px)",
             pulseToggleLabel: "Pulse animation (draws attention to the button)",
+            pulseScaleLabel: "Icon \"breathing\" scale",
+            pulseRingLabel: "Expanding ring / halo",
+            pulseDurationLabel: "Duration (ms)",
+            pulseScaleAmountLabel: "Scale amount",
+            pulseColorLabel: "Ring color",
             secRulesTitle: "Location rules",
             secRulesDesc: "Route to a different number based on the visitor's country, state or city. Evaluated City → State → Country → Fallback.",
             rulesEmpty: "No location rules yet — every visitor gets the fallback number.",
@@ -1053,6 +1279,8 @@
             genBreakpointLabel: "Breakpoint mobile (px)",
             imageModeLabel: "Imagem do botão",
             imageModeDefault: "Padrão da biblioteca (servido pelo CDN selecionado)",
+            imageModeIcon: "Ícone embutido",
+            imageModePill: "Pílula (ícone + texto)",
             imageModeFolder: "Pasta customizada (whatsapp-desktop.png / whatsapp-mobile.png)",
             imageModeUrls: "URLs de imagem específicas",
             genAssetsLabel: "URL base das imagens",
@@ -1061,7 +1289,29 @@
             imageMobileUrlLabel: "URL da imagem (mobile)",
             imageUrlsHint: "URL completa de cada arquivo de imagem — usada exatamente como digitada, sem anexar nada.",
             assetsUrlWarning: "⚠ Isso parece ser um arquivo de imagem específico, não uma pasta — a biblioteca vai anexar \"/whatsapp-desktop.png\" a ele. Troque \"Imagem do botão\" acima para \"URLs de imagem específicas\".",
+            iconVariantLabel: "Estilo do ícone",
+            pillTextLabel: "Texto do botão",
+            pillExpandLabel: "Expansão desktop",
+            pillExpandMobileLabel: "Expansão mobile",
+            pillExpandHover: "Ao passar o mouse",
+            pillExpandAlways: "Sempre expandido",
+            pillExpandClick: "Ao clicar (abre no 2º clique)",
+            pillExpandNever: "Nunca (só ícone)",
+            pillIconLabel: "Ícone dentro da pílula",
+            pillColorLabel: "Cor de fundo",
+            pillTextColorLabel: "Cor do texto",
+            pillBorderRadiusLabel: "Border radius (px)",
+            pillFontSizeLabel: "Tamanho da fonte (px)",
+            pillFontWeightLabel: "Peso da fonte",
+            pillPaddingRightLabel: "Padding direito (px)",
+            iconSizeLabel: "Tamanho do ícone, desktop (px)",
+            iconSizeMobileLabel: "Tamanho do ícone, mobile (px)",
             pulseToggleLabel: "Animação de pulso (chama atenção para o botão)",
+            pulseScaleLabel: "Escala \"respirando\" do ícone",
+            pulseRingLabel: "Anel / halo expansivo",
+            pulseDurationLabel: "Duração (ms)",
+            pulseScaleAmountLabel: "Intensidade da escala",
+            pulseColorLabel: "Cor do anel",
             secRulesTitle: "Regras de localização",
             secRulesDesc: "Direcione para um número diferente conforme país, estado ou cidade do visitante. Avaliado Cidade → Estado → País → Padrão.",
             rulesEmpty: "Nenhuma regra ainda — todo visitante recebe o número padrão.",
@@ -1150,6 +1400,36 @@
         return ASSETS_BASE_URLS[state.cdn] || ASSETS_BASE_URLS.jsdelivr;
     }
 
+    // Mirrors src/icons.ts exactly (same markup, same keys) so the preview
+    // shown here matches what the published library actually renders.
+    // None of these draw a border/outline/shadow of their own.
+    var ICON_VARIANTS = {
+        solid:
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="100%" height="100%">' +
+            '<path fill="#25D366" d="M16 0C7.164 0 0 7.164 0 16c0 2.82.738 5.566 2.14 7.984L0 32l8.207-2.113A15.9 15.9 0 0 0 16 32c8.836 0 16-7.164 16-16S24.836 0 16 0z"/>' +
+            '<path fill="#FFF" d="M25.144 22.63c-.4 1.13-1.99 2.07-3.25 2.34-.87.18-2 .33-5.8-1.24-4.86-2.02-7.99-6.94-8.23-7.26-.24-.32-1.97-2.62-1.97-5 0-2.38 1.24-3.55 1.68-4.03.44-.48.96-.6 1.28-.6.32 0 .64 0 .92.02.3.02.7-.11 1.09.83.4.96 1.36 3.34 1.48 3.58.12.24.2.52.04.84-.16.32-.24.52-.48.8-.24.28-.5.62-.72.84-.24.24-.49.5-.21.98.28.48 1.24 2.05 2.67 3.32 1.83 1.63 3.37 2.14 3.85 2.38.48.24.76.2 1.04-.12.28-.32 1.2-1.4 1.52-1.88.32-.48.64-.4 1.08-.24.44.16 2.8 1.32 3.28 1.56.48.24.8.36.92.56.12.2.12 1.14-.28 2.26z"/>' +
+            "</svg>",
+        roundedSquare:
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="100%" height="100%">' +
+            '<rect x="0" y="0" width="32" height="32" rx="9" fill="#25D366"/>' +
+            '<path fill="#FFF" d="M25.144 22.63c-.4 1.13-1.99 2.07-3.25 2.34-.87.18-2 .33-5.8-1.24-4.86-2.02-7.99-6.94-8.23-7.26-.24-.32-1.97-2.62-1.97-5 0-2.38 1.24-3.55 1.68-4.03.44-.48.96-.6 1.28-.6.32 0 .64 0 .92.02.3.02.7-.11 1.09.83.4.96 1.36 3.34 1.48 3.58.12.24.2.52.04.84-.16.32-.24.52-.48.8-.24.28-.5.62-.72.84-.24.24-.49.5-.21.98.28.48 1.24 2.05 2.67 3.32 1.83 1.63 3.37 2.14 3.85 2.38.48.24.76.2 1.04-.12.28-.32 1.2-1.4 1.52-1.88.32-.48.64-.4 1.08-.24.44.16 2.8 1.32 3.28 1.56.48.24.8.36.92.56.12.2.12 1.14-.28 2.26z"/>' +
+            "</svg>",
+        flat:
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="100%" height="100%">' +
+            '<circle cx="16" cy="16" r="16" fill="#25D366"/>' +
+            '<path fill="#FFF" d="M25.144 22.63c-.4 1.13-1.99 2.07-3.25 2.34-.87.18-2 .33-5.8-1.24-4.86-2.02-7.99-6.94-8.23-7.26-.24-.32-1.97-2.62-1.97-5 0-2.38 1.24-3.55 1.68-4.03.44-.48.96-.6 1.28-.6.32 0 .64 0 .92.02.3.02.7-.11 1.09.83.4.96 1.36 3.34 1.48 3.58.12.24.2.52.04.84-.16.32-.24.52-.48.8-.24.28-.5.62-.72.84-.24.24-.49.5-.21.98.28.48 1.24 2.05 2.67 3.32 1.83 1.63 3.37 2.14 3.85 2.38.48.24.76.2 1.04-.12.28-.32 1.2-1.4 1.52-1.88.32-.48.64-.4 1.08-.24.44.16 2.8 1.32 3.28 1.56.48.24.8.36.92.56.12.2.12 1.14-.28 2.26z"/>' +
+            "</svg>",
+        mono:
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="100%" height="100%">' +
+            '<circle cx="16" cy="16" r="16" fill="#1a1a1a"/>' +
+            '<path fill="#FFF" d="M25.144 22.63c-.4 1.13-1.99 2.07-3.25 2.34-.87.18-2 .33-5.8-1.24-4.86-2.02-7.99-6.94-8.23-7.26-.24-.32-1.97-2.62-1.97-5 0-2.38 1.24-3.55 1.68-4.03.44-.48.96-.6 1.28-.6.32 0 .64 0 .92.02.3.02.7-.11 1.09.83.4.96 1.36 3.34 1.48 3.58.12.24.2.52.04.84-.16.32-.24.52-.48.8-.24.28-.5.62-.72.84-.24.24-.49.5-.21.98.28.48 1.24 2.05 2.67 3.32 1.83 1.63 3.37 2.14 3.85 2.38.48.24.76.2 1.04-.12.28-.32 1.2-1.4 1.52-1.88.32-.48.64-.4 1.08-.24.44.16 2.8 1.32 3.28 1.56.48.24.8.36.92.56.12.2.12 1.14-.28 2.26z"/>' +
+            "</svg>"
+    };
+    var ICON_VARIANT_KEYS = ["solid", "roundedSquare", "flat", "mono"];
+    var ICON_VARIANT_LABELS = {
+        solid: "Solid", roundedSquare: "Rounded square", flat: "Flat", mono: "Mono"
+    };
+
     var uidCounter = 0;
     function uid() { return "id" + (++uidCounter); }
 
@@ -1205,10 +1485,28 @@
         assetsBaseUrl: DEFAULT_ASSETS_BASE_URL,
         imageDesktopUrl: "",
         imageMobileUrl: "",
+        iconVariant: "solid",
+        pillText: "",
+        pillExpand: "hover",
+        pillExpandMobile: "always",
+        pillIcon: "solid",
+        pillColor: "#25D366",
+        pillTextColor: "#ffffff",
+        pillFontSize: 14,
+        pillFontWeight: "600",
+        pillPaddingRight: 18,
+        pillBorderRadius: 999,
+        iconSize: 64,
+        iconSizeMobile: 56,
         cdn: "jsdelivr",
         format: "pretty",
         debugMode: false,
         pulse: false,
+        pulseScale: true,
+        pulseRing: false,
+        pulseDuration: 1800,
+        pulseScaleAmount: 1.08,
+        pulseColor: "#25D366",
         snippetMode: "standard",
         injectWrap: true,
         customSides: {
@@ -1226,7 +1524,7 @@
      * State persistence (localStorage) — survives page reloads so
      * editing a long list of rules isn't lost by accident.
      * ============================================================ */
-    var STORAGE_KEY = "wa_demo_generator_state";
+    var STORAGE_KEY = "wa_demo_generator_state_v5";
 
     function saveState() {
         try {
@@ -1373,7 +1671,20 @@
             mobileBreakpoint: Number(state.breakpoint) || 768
         };
 
-        if (state.imageMode === "urls") {
+        if (state.imageMode === "pill") {
+            config.pill = { text: state.pillText || t("message"), expand: state.pillExpand };
+            // Only emit expandMobile when it differs from expand (avoids redundant config)
+            if (state.pillExpandMobile && state.pillExpandMobile !== state.pillExpand)
+                config.pill.expandMobile = state.pillExpandMobile;
+            if (state.pillColor && state.pillColor !== "#25D366") config.pill.color = state.pillColor;
+            if (state.pillTextColor && state.pillTextColor !== "#ffffff") config.pill.textColor = state.pillTextColor;
+            if (Number(state.pillFontSize) !== 14) config.pill.fontSize = Number(state.pillFontSize);
+            if (String(state.pillFontWeight) !== "600") config.pill.fontWeight = Number(state.pillFontWeight);
+            if (Number(state.pillPaddingRight) !== 18) config.pill.paddingRight = Number(state.pillPaddingRight);
+            if (Number(state.pillBorderRadius) !== 999) config.pill.borderRadius = Number(state.pillBorderRadius);
+        } else if (state.imageMode === "icon") {
+            if (state.iconVariant && state.iconVariant !== "solid") config.iconVariant = state.iconVariant;
+        } else if (state.imageMode === "urls") {
             var images = {};
             if (state.imageDesktopUrl) images.desktop = state.imageDesktopUrl;
             if (state.imageMobileUrl) images.mobile = state.imageMobileUrl;
@@ -1386,7 +1697,29 @@
             // whichever CDN is serving dist/, so there's nothing to set.
             config.assetsBaseUrl = getDefaultAssetsBaseUrl();
         }
-        if (state.pulse) config.theme = { pulse: true };
+
+        if (Number(state.iconSize) !== 64 || Number(state.iconSizeMobile) !== 56) {
+            config.theme = config.theme || {};
+            config.theme.iconSize = Number(state.iconSize) || 64;
+            config.theme.iconSizeMobile = Number(state.iconSizeMobile) || 56;
+        }
+
+        if (state.pulse) {
+            var pulseIsDefault = state.pulseScale && !state.pulseRing &&
+                Number(state.pulseDuration) === 1800 && Number(state.pulseScaleAmount) === 1.08;
+            config.theme = config.theme || {};
+            if (pulseIsDefault) {
+                config.theme.pulse = true;
+            } else {
+                var pulseObj = {};
+                if (!state.pulseScale) pulseObj.scale = false;
+                if (state.pulseRing) pulseObj.ring = true;
+                if (Number(state.pulseDuration) !== 1800) pulseObj.duration = Number(state.pulseDuration);
+                if (Number(state.pulseScaleAmount) !== 1.08) pulseObj.scaleAmount = Number(state.pulseScaleAmount);
+                if (state.pulseRing && state.pulseColor !== "#25D366") pulseObj.color = state.pulseColor;
+                config.theme.pulse = pulseObj;
+            }
+        }
 
         config.fallback = { phone: (state.phone || "").replace(/\D/g, "") };
 
@@ -1543,13 +1876,25 @@
         return config;
     }
 
+    function buildPreviewConfig() {
+        return buildFinalConfig();
+    }
+
     function scheduleLivePreview() {
         updateGeneratedCode();
         saveState();
         if (!libInitialized) return;
         clearTimeout(reloadTimer);
         reloadTimer = setTimeout(function () {
-            window.WhatsAppFloating.reload(attachEventHandlers(buildConfig()));
+            // Deliberately `init()`, not `reload()`: buildConfig() always
+            // constructs a complete, standalone config from `state` (never
+            // a partial patch), and `reload()` deep-merges onto whatever
+            // config is already active — so a field that was present in an
+            // earlier render (e.g. assetsBaseUrl from "Library default"
+            // mode) would keep leaking into later renders even after the
+            // user switches to a mode that no longer sets it (e.g. "Built-in
+            // icon"). `init()` always starts fresh from the config given.
+            window.WhatsAppFloating.init(attachEventHandlers(buildPreviewConfig()));
         }, 250);
     }
 
@@ -1876,6 +2221,8 @@
         var pulseCheckbox = document.getElementById("f-pulse");
         pulseCheckbox.addEventListener("change", function () {
             state.pulse = pulseCheckbox.checked;
+            document.getElementById("pulse-options-field").style.display = state.pulse ? "" : "none";
+            updateImageModeVisibility();
             scheduleLivePreview();
         });
 
@@ -1893,12 +2240,138 @@
             scheduleLivePreview();
         });
 
+        var pillTextInput = document.getElementById("f-pill-text");
+        pillTextInput.addEventListener("input", function () {
+            state.pillText = pillTextInput.value;
+            scheduleLivePreview();
+        });
+
+        var pillExpandSelect = document.getElementById("f-pill-expand");
+        pillExpandSelect.addEventListener("change", function () {
+            state.pillExpand = pillExpandSelect.value;
+            scheduleLivePreview();
+        });
+
+        var pillExpandMobileSelect = document.getElementById("f-pill-expand-mobile");
+        pillExpandMobileSelect.addEventListener("change", function () {
+            state.pillExpandMobile = pillExpandMobileSelect.value;
+            scheduleLivePreview();
+        });
+
+        ["f-pill-color", "f-pill-text-color", "f-pill-border-radius",
+         "f-pill-font-size", "f-pill-font-weight", "f-pill-padding-right"].forEach(function (id) {
+            var el = document.getElementById(id);
+            var stateKeyMap = {
+                "f-pill-color": "pillColor",
+                "f-pill-text-color": "pillTextColor",
+                "f-pill-border-radius": "pillBorderRadius",
+                "f-pill-font-size": "pillFontSize",
+                "f-pill-font-weight": "pillFontWeight",
+                "f-pill-padding-right": "pillPaddingRight"
+            };
+            var eventName = el.tagName === "SELECT" ? "change" : "input";
+            el.addEventListener(eventName, function () {
+                state[stateKeyMap[id]] = el.value;
+                scheduleLivePreview();
+            });
+        });
+
+        ["f-icon-size", "f-icon-size-mobile", "f-pulse-duration", "f-pulse-scale-amount", "f-pulse-color"].forEach(function (id) {
+            var el = document.getElementById(id);
+            el.addEventListener("input", function () {
+                var key = { "f-icon-size": "iconSize", "f-icon-size-mobile": "iconSizeMobile",
+                    "f-pulse-duration": "pulseDuration", "f-pulse-scale-amount": "pulseScaleAmount",
+                    "f-pulse-color": "pulseColor" }[id];
+                state[key] = el.value;
+                scheduleLivePreview();
+            });
+        });
+
+        ["f-pulse-scale", "f-pulse-ring"].forEach(function (id) {
+            var el = document.getElementById(id);
+            el.addEventListener("change", function () {
+                var key = id === "f-pulse-scale" ? "pulseScale" : "pulseRing";
+                state[key] = el.checked;
+                scheduleLivePreview();
+            });
+        });
+
+        renderIconGalleries();
         bindPositionField();
     }
 
     function updateImageModeVisibility() {
+        var isPill = state.imageMode === "pill";
         document.getElementById("assets-folder-field").style.display = state.imageMode === "folder" ? "" : "none";
         document.getElementById("assets-urls-field").style.display = state.imageMode === "urls" ? "" : "none";
+        document.getElementById("icon-variant-field").style.display = state.imageMode === "icon" ? "" : "none";
+        document.getElementById("pill-field").style.display = isPill ? "" : "none";
+        // Icon size doesn't apply to a pill (driven by text content) or custom image (natural size wins).
+        document.getElementById("icon-size-field").style.display =
+            isPill || state.imageMode === "urls" ? "none" : "";
+        // Pulse ring/halo clashes with pill shape — hide in pill mode.
+        // Use setAttribute on the body so the CSS rule [data-mode=pill] can also
+        // target these elements, as a belt-and-suspenders fallback.
+        document.body.setAttribute("data-image-mode", state.imageMode);
+        var ringField = document.getElementById("pulse-ring-field");
+        var colorField = document.getElementById("pulse-color-field");
+        var hide = isPill ? "none" : "";
+        if (ringField) { ringField.style.setProperty("display", isPill ? "none" : "", "important"); }
+        if (colorField) { colorField.style.setProperty("display", isPill ? "none" : "", "important"); }
+        if (isPill) {
+            var ringCb = document.getElementById("f-pulse-ring");
+            if (ringCb && ringCb.checked) { ringCb.checked = false; state.pulseRing = false; }
+        }
+    }
+
+    // Strips the embedded background fill from a pill icon SVG so only the
+    // white glyph path remains — the pill's own background color shows through.
+    function stripIconBg(svgString) {
+        var div = document.createElement("div");
+        div.innerHTML = svgString;
+        var svg = div.querySelector("svg");
+        if (!svg) return svgString;
+        var children = svg.children;
+        if (children.length > 0) {
+            children[0].setAttribute("fill", "transparent");
+        }
+        // Color the glyph path white so it shows on any pill background
+        var paths = svg.querySelectorAll("path");
+        paths[paths.length - 1].setAttribute("fill", "#ffffff");
+        return div.innerHTML;
+    }
+
+    function renderIconGallery(containerId, selectedKey, onSelect, pillMode) {
+        var container = document.getElementById(containerId);
+        container.innerHTML = "";
+        ICON_VARIANT_KEYS.forEach(function (key) {
+            var swatch = document.createElement("div");
+            swatch.className = "icon-swatch" + (key === selectedKey ? " active" : "");
+            swatch.setAttribute("role", "radio");
+            swatch.setAttribute("aria-checked", key === selectedKey ? "true" : "false");
+            var svgHtml = pillMode ? stripIconBg(ICON_VARIANTS[key]) : ICON_VARIANTS[key];
+            swatch.innerHTML =
+                '<div class="icon-img">' + svgHtml + "</div>" +
+                "<span>" + (ICON_VARIANT_LABELS[key] || key) + "</span>";
+            // Remove inline width/height="100%" from the SVG so the CSS
+            // width:48px!important on .icon-img svg controls the size —
+            // width="100%" resolves to the swatch width (~98px), not 48px.
+            var svg = swatch.querySelector("svg");
+            if (svg) {
+                svg.removeAttribute("width");
+                svg.removeAttribute("height");
+            }
+            swatch.addEventListener("click", function () { onSelect(key); });
+            container.appendChild(swatch);
+        });
+    }
+
+    function renderIconGalleries() {
+        renderIconGallery("icon-gallery", state.iconVariant, function (key) {
+            state.iconVariant = key;
+            renderIconGalleries();
+            scheduleLivePreview();
+        }, false);
     }
 
     // Catches the exact mistake of pasting a specific image file's URL into
@@ -2097,11 +2570,29 @@
         document.getElementById("f-image-mode").value = state.imageMode;
         document.getElementById("f-image-desktop").value = state.imageDesktopUrl;
         document.getElementById("f-image-mobile").value = state.imageMobileUrl;
+        document.getElementById("f-pill-text").value = state.pillText;
+        document.getElementById("f-pill-expand").value = state.pillExpand;
+        document.getElementById("f-pill-expand-mobile").value = state.pillExpandMobile || "always";
+        document.getElementById("f-pill-color").value = state.pillColor || "#25D366";
+        document.getElementById("f-pill-text-color").value = state.pillTextColor || "#ffffff";
+        document.getElementById("f-pill-border-radius").value = state.pillBorderRadius != null ? state.pillBorderRadius : 999;
+        document.getElementById("f-pill-font-size").value = state.pillFontSize || 14;
+        document.getElementById("f-pill-font-weight").value = state.pillFontWeight || "600";
+        document.getElementById("f-pill-padding-right").value = state.pillPaddingRight != null ? state.pillPaddingRight : 18;
+        document.getElementById("f-icon-size").value = state.iconSize;
+        document.getElementById("f-icon-size-mobile").value = state.iconSizeMobile;
         document.getElementById("f-cdn").value = state.cdn;
         document.getElementById("f-format").value = state.format;
         document.getElementById("f-debug").checked = state.debugMode;
         document.getElementById("f-pulse").checked = state.pulse;
+        document.getElementById("f-pulse-scale").checked = state.pulseScale;
+        document.getElementById("f-pulse-ring").checked = state.pulseRing;
+        document.getElementById("f-pulse-duration").value = state.pulseDuration;
+        document.getElementById("f-pulse-scale-amount").value = state.pulseScaleAmount;
+        document.getElementById("f-pulse-color").value = state.pulseColor;
+        document.getElementById("pulse-options-field").style.display = state.pulse ? "" : "none";
         document.getElementById("f-inject-wrap").checked = state.injectWrap;
+        renderIconGalleries();
         document.getElementById("inject-wrap-toggle").style.display = state.snippetMode === "inject" ? "" : "none";
         document.querySelectorAll(".subtab-btn").forEach(function (b) {
             b.classList.toggle("active", b.dataset.subtab === state.snippetMode);
@@ -2137,13 +2628,13 @@
     // loads the published package from jsDelivr.
     var isLocal = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(window.location.hostname) || window.location.protocol === "file:";
     var libSrc = isLocal
-        ? "../dist/whatsapp-floating.min.js"
+        ? "../dist/whatsapp-floating.min.js?v=" + Date.now()
         : "https://cdn.jsdelivr.net/npm/whatsapp-floating@1/dist/whatsapp-floating.min.js";
 
     var libScript = document.createElement("script");
     libScript.src = libSrc;
     libScript.onload = function () {
-        var config = attachEventHandlers(buildConfig());
+        var config = attachEventHandlers(buildPreviewConfig());
         config.debug = true;
         config.production = false;
         window.WhatsAppFloatingConfig = config;

@@ -300,6 +300,12 @@ pill: {
 | `pill.text` | `string` | — (required) | The label shown next to the icon. |
 | `pill.expand` | `"hover"\|"always"\|"click"\|"never"` | `"hover"` | `"hover"` expands on mouse hover, collapsing back to icon-only otherwise (desktop-friendly). `"always"` stays expanded. `"click"` — the first click/tap only reveals the label (no navigation, no `open` event); the next click opens WhatsApp normally. `"never"` stays icon-only forever; the text is still set as the accessible label. |
 | `pill.icon` | icon variant key or custom SVG string | `"solid"` | Icon shown inside the pill — same choices as `iconVariant` above. |
+| `pill.color` | `string` (CSS color) | `"#25D366"` | Pill background color. |
+| `pill.textColor` | `string` (CSS color) | `"#ffffff"` | Pill label text color. |
+| `pill.fontSize` | `number` (px) | `14` | Font size of the label in pixels. |
+| `pill.fontWeight` | `number\|string` | `600` | CSS font-weight of the label (e.g. `400`, `700`). |
+| `pill.paddingRight` | `number` (px) | `18` | Extra horizontal padding between the label and the right edge of the pill. |
+| `pill.borderRadius` | `number` (px) | `999` | Border radius of the pill. Use `0` for a square button, `4`–`16` for rounded-rectangle, `999` for fully-rounded. |
 
 `ariaLabel` still wins if explicitly set; otherwise the pill's `aria-label` defaults to `pill.text` (more descriptive than the generic "WhatsApp" fallback used elsewhere).
 
