@@ -931,10 +931,10 @@
         '<tr><td><code>geoApiUrl</code></td><td>string</td><td>—</td><td>Custom primary geolocation endpoint, tried first.</td></tr>' +
         '<tr><td><code>geoProviders</code></td><td>string[]</td><td>—</td><td>Additional endpoints appended to the fallback chain.</td></tr>' +
         '<tr><td><code>geoTimeout</code></td><td>number (ms)</td><td>5000</td><td>Per-provider timeout before moving to the next one.</td></tr>' +
-        '<tr><td><code>cacheLocation</code></td><td>boolean</td><td>true</td><td>Cache the resolved location in localStorage.</td></tr>' +
-        '<tr><td><code>geoCacheTTL</code></td><td>number (ms)</td><td>21600000 (6h)</td><td>Cache lifetime; 0 disables expiry.</td></tr>' +
+        '<tr><td><code>cacheLocation</code></td><td>boolean</td><td>false</td><td>Cache the resolved location in localStorage. Off by default so the widget always resolves in real time (e.g. across VPN/network switches).</td></tr>' +
+        '<tr><td><code>geoCacheTTL</code></td><td>number (ms)</td><td>21600000 (6h)</td><td>Cache lifetime (only applies when cacheLocation is true); 0 disables expiry.</td></tr>' +
         '</table>' +
-        '<p class="hint">Built-in fallback chain: ipapi.co → ipwho.is → ip-api.com → ipinfo.io. Only one HTTP request is made per page load (subject to caching); the chain only tries the next provider if one actually fails.</p>' +
+        '<p class="hint">Built-in fallback chain: ipapi.co → ipwho.is → ip-api.com → ipinfo.io → ip.oxylabs.io. Only one HTTP request is made per page load (subject to caching); the chain only tries the next provider if one actually fails. When cacheLocation is true, that same request is also used to detect IP changes (e.g. VPN) and refresh the cache automatically.</p>' +
 
         '<h3>Remote configuration</h3>' +
         '<p><code>remoteConfigUrl</code>: a JSON URL fetched and deep-merged into the local config before initializing — update rules/phones without redeploying the script tag.</p>' +
@@ -1088,10 +1088,10 @@
         '<tr><td><code>geoApiUrl</code></td><td>string</td><td>—</td><td>Endpoint de geolocalização primário customizado, tentado primeiro.</td></tr>' +
         '<tr><td><code>geoProviders</code></td><td>string[]</td><td>—</td><td>Endpoints adicionais anexados à cadeia de fallback.</td></tr>' +
         '<tr><td><code>geoTimeout</code></td><td>number (ms)</td><td>5000</td><td>Timeout por provedor antes de passar para o próximo.</td></tr>' +
-        '<tr><td><code>cacheLocation</code></td><td>boolean</td><td>true</td><td>Cacheia a localização resolvida em localStorage.</td></tr>' +
-        '<tr><td><code>geoCacheTTL</code></td><td>number (ms)</td><td>21600000 (6h)</td><td>Duração do cache; 0 desabilita expiração.</td></tr>' +
+        '<tr><td><code>cacheLocation</code></td><td>boolean</td><td>false</td><td>Cacheia a localização resolvida em localStorage. Desativado por padrão para que o widget sempre resolva em tempo real (ex: ao trocar de VPN/rede).</td></tr>' +
+        '<tr><td><code>geoCacheTTL</code></td><td>number (ms)</td><td>21600000 (6h)</td><td>Duração do cache (só se aplica quando cacheLocation é true); 0 desabilita expiração.</td></tr>' +
         '</table>' +
-        '<p class="hint">Cadeia de fallback embutida: ipapi.co → ipwho.is → ip-api.com → ipinfo.io. Apenas uma chamada HTTP é feita por carregamento de página (sujeito a cache); a cadeia só tenta o próximo provedor se um falhar de fato.</p>' +
+        '<p class="hint">Cadeia de fallback embutida: ipapi.co → ipwho.is → ip-api.com → ipinfo.io → ip.oxylabs.io. Apenas uma chamada HTTP é feita por carregamento de página (sujeito a cache); a cadeia só tenta o próximo provedor se um falhar de fato. Quando cacheLocation é true, essa mesma chamada também é usada para detectar mudança de IP (ex: VPN) e atualizar o cache automaticamente.</p>' +
 
         '<h3>Configuração remota</h3>' +
         '<p><code>remoteConfigUrl</code>: uma URL JSON buscada e mesclada profundamente na configuração local antes de inicializar — atualize regras/telefones sem reimplantar a tag de script.</p>' +

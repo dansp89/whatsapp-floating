@@ -269,6 +269,7 @@ export interface WhatsAppFloatingConfig {
     /** Extra endpoints to try, in order, before giving up. Built-in providers are used if omitted. */
     geoProviders?: string[];
     geoTimeout?: number;
+    /** Cache the resolved location in localStorage. Default: false (always resolves in real time). */
     cacheLocation?: boolean;
     geoCacheTTL?: number;
 

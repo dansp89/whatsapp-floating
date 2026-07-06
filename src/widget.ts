@@ -105,7 +105,7 @@ export class WhatsAppFloatingWidget {
             debug: false,
             production: true,
             mobileBreakpoint: 768,
-            cacheLocation: true,
+            cacheLocation: false,
             analytics: true,
             lazyLoad: false,
         };

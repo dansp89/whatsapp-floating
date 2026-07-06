@@ -218,10 +218,12 @@ Skips the geolocation API entirely and uses these values — useful for testing 
 | `geoApiUrl` | `string` | — | Custom primary geolocation endpoint, tried first. |
 | `geoProviders` | `string[]` | — | Additional endpoints appended to the fallback chain. |
 | `geoTimeout` | `number` (ms) | `5000` | Per-provider timeout before moving to the next one. |
-| `cacheLocation` | `boolean` | `true` | Cache the resolved location in `localStorage`. |
-| `geoCacheTTL` | `number` (ms) | `21600000` (6h) | Cache lifetime; `0` disables expiry. |
+| `cacheLocation` | `boolean` | `false` | Cache the resolved location in `localStorage`. Off by default so the widget always resolves in real time (e.g. across VPN/network switches). |
+| `geoCacheTTL` | `number` (ms) | `21600000` (6h) | Cache lifetime (only applies when `cacheLocation` is `true`); `0` disables expiry. |
 
-Built-in fallback chain (tried in order until one succeeds): **ipapi.co → ipwho.is → ip-api.com → ipinfo.io**. `geoApiUrl` (if set) is tried first, `geoProviders` are appended after the built-ins.
+Built-in fallback chain (tried in order until one succeeds): **ipapi.co → ipwho.is → ip-api.com → ipinfo.io → ip.oxylabs.io**. `geoApiUrl` (if set) is tried first, `geoProviders` are appended after the built-ins. Note: `ip.oxylabs.io` only exposes `country`/`city` (no `state`/`region`), so it's kept as the last resort.
+
+When `cacheLocation` is `true`, a provider is still queried on every call to read the visitor's current IP (already included in every provider's response, so this costs no extra request). If the IP matches the one stored with the cache, the cached location is reused as-is; if it changed — e.g. the visitor connected through a VPN — the cache is refreshed with the newly resolved location instead of serving stale data.
 
 > `ip-api.com`'s free tier only serves plain HTTP. It's kept as a late fallback so it never blocks HTTPS sites from getting a result via the earlier HTTPS providers, but if you rely on it directly, be aware of mixed-content restrictions.
 
