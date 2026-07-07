@@ -162,6 +162,8 @@ Matching priority: **City → State → Country → Fallback**. Within each leve
 | `numbers` | `{ phone: string, weight?: number }[]` | Multiple numbers — use with `distribution`. |
 | `distribution` | `"random" \| "roundrobin" \| "weighted"` | How to pick among `numbers`. Default `"random"`. (`"round-robin"`/`"round_robin"` are accepted aliases for `"roundrobin"`.) |
 | `images` | `{ desktop?, mobile? }` | Overrides the button image when this rule matches. |
+| `message` | `string` | Overrides the wa.me `?text=` message when this rule matches — see [Per-rule messages](#per-rule-messages). Falls back to the top-level `message` if omitted. |
+| `pillText` | `string` | Overrides the [pill button's](#pill-button-icon--text) label when this rule matches. Only meaningful when the top-level `pill` config is set; resolved the same way as `message` (independently of phone). |
 | `schedule` | see [Scheduling](#scheduling) | Rule only matches within business hours/days. |
 | `utm` | see [UTM matching](#utm-campaign-matching) | Rule only matches for a given campaign. |
 | `language` | `string` | Rule only matches if the browser language starts with this value (e.g. `"en"`). |
@@ -211,6 +213,8 @@ pathRules: [
 | `pathRegex` | `string` | Regular expression (no slashes) tested against the pathname; use instead of/with `path`. |
 | `phone` / `numbers` / `distribution` | same as location rules | If omitted, the phone falls through to location-based `rules`/`fallback`. |
 | `images` | `{ desktop?, mobile? }` | Applied even if `phone` is omitted — merges on top of whatever image would otherwise be shown. |
+| `message` | `string` | Overrides the wa.me `?text=` message when this path rule matches — see [Per-rule messages](#per-rule-messages). Applied even if `phone` is omitted. |
+| `pillText` | `string` | Overrides the pill button's label when this path rule matches — see `rules[].pillText` above. Applied even if `phone` is omitted. |
 | `schedule`, `utm` | same as location rules | Extra conditions for the path rule to match. |
 
 ### Fallback
@@ -220,11 +224,33 @@ fallback: {
   phone: "5511999999999",
   // or:
   numbers: [{ phone: "5511911111111", weight: 2 }, { phone: "5511922222222" }],
-  distribution: "weighted"
+  distribution: "weighted",
+  message: "Hi! How can we help?" // optional — see Per-rule messages below
 }
 ```
 
-Used when no `pathRules`/`rules` match. Supports the same `numbers`/`distribution` options as location rules.
+Used when no `pathRules`/`rules` match. Supports the same `numbers`/`distribution`/`message` options as location rules.
+
+### Per-rule messages
+
+Any rule (`rules[]`, `pathRules[]`, or `fallback`) can set its own `message`, overriding the wa.me `?text=` for visitors that rule applies to — e.g. greeting visitors from a specific city differently, or using a campaign-specific message on a landing page matched by `pathRules`. The same rules can also set `pillText` to override just the [pill button's](#pill-button-icon--text) label the same way, when `pill` is configured.
+
+```js
+window.WhatsAppFloatingConfig = {
+  message: "Hi! I'd like more info.",           // default, used when no rule below applies
+  pill: { text: "Talk to us" },                 // default pill label, if using the pill button style
+  rules: [
+    { country: "BR", state: "SP", message: "Olá! Vi que você é de São Paulo — temos uma oferta especial!", pillText: "Fale com SP" },
+    { country: "BR", message: "Olá! Como podemos ajudar?" }
+  ],
+  pathRules: [
+    { path: "/promo", message: "Vim da página de promoção — quero saber mais!", pillText: "Quero a promoção!" }
+  ],
+  fallback: { phone: "5511999999999" }
+};
+```
+
+**Resolution for `message` and `pillText` is independent from phone/image resolution** — a rule can set either one without `phone` (and vice versa), so a rule that only overrides the message/pill label still lets phone resolution fall through to another rule/fallback. Priority mirrors phone resolution, evaluated separately for each field: `pathRules` (first match with the field set) → `rules` (City → State → Country, first match at each level with the field set) → `fallback`'s own field → the top-level `message`/`pill.text`. Placeholders (`{{city}}`, `{{state}}`, `{{country}}`, `{{ip}}`, `{{ip_base64}}`) and [WhatsApp's own markdown formatting](#message-placeholders) work the same in a per-rule `message` as in the top-level one (`pillText` is plain text — no markdown/placeholders, same as `pill.text`).
 
 ### Scheduling
 
@@ -351,7 +377,7 @@ pill: {
 
 | Property | Type | Default | Description |
 |---|---|---|---|
-| `pill.text` | `string` | — (required) | The label shown next to the icon. |
+| `pill.text` | `string` | — (required) | The label shown next to the icon. Any rule/pathRule/fallback can override just this label per-visitor via its own `pillText` — see [Per-rule messages](#per-rule-messages), same resolution logic. |
 | `pill.expand` | `"hover"\|"always"\|"click"\|"never"` | `"hover"` | `"hover"` expands on mouse hover, collapsing back to icon-only otherwise (desktop-friendly). `"always"` stays expanded. `"click"` — the first click/tap only reveals the label (no navigation, no `open` event); the next click opens WhatsApp normally. `"never"` stays icon-only forever; the text is still set as the accessible label. |
 | `pill.icon` | icon variant key or custom SVG string | `"solid"` | Icon shown inside the pill — same choices as `iconVariant` above. |
 | `pill.color` | `string` (CSS color) | `"#25D366"` | Pill background color. |

@@ -294,7 +294,14 @@
         margin-bottom: 14px;
     }
     .field label { font-size: 0.85rem; font-weight: 600; }
-    .field .hint { font-size: 0.78rem; color: var(--muted); font-weight: 400; }
+    .field .hint,
+    .schedule-toggle-body .hint {
+        display: block;
+        font-size: 0.78rem;
+        color: var(--muted);
+        font-weight: 400;
+        margin: 4px 0;
+    }
     .field .hint.warning {
         color: #b45309;
         background: #fffbeb;
@@ -374,7 +381,8 @@
     .field input[type="url"],
     .field input[type="number"],
     .field select,
-    .field textarea {
+    .field textarea,
+    .schedule-toggle-body textarea {
         width: 100%;
         font-family: inherit;
         font-size: 0.9rem;
@@ -572,6 +580,12 @@
     /* Hide pulse ring/halo fields in pill mode — belt-and-suspenders over the JS visibility toggle */
     body[data-image-mode="pill"] #pulse-ring-field,
     body[data-image-mode="pill"] #pulse-color-field { display: none !important; }
+    /* Per-rule pill text override only makes sense once the global "Button
+       image" mode is Pill — hidden otherwise. Always present in the DOM
+       (see buildPillTextField() in app.js) so switching modes doesn't
+       require re-rendering every rule card. */
+    .rule-pill-text-field { display: none; }
+    body[data-image-mode="pill"] .rule-pill-text-field { display: block; }
     /* Pill icon gallery: green background, stripped icon bg so glyph floats on green */
     #pill-icon-gallery .icon-swatch { background: #25D366; border-color: #1aad55; }
     #pill-icon-gallery .icon-swatch:hover { background: #20c05a; }

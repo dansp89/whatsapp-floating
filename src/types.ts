@@ -48,6 +48,24 @@ export interface RuleConfig {
     /** Override the button image(s) when this rule matches */
     images?: ImagesConfig;
 
+    /**
+     * Override the wa.me `?text=` message when this rule matches, e.g. to
+     * greet visitors from a specific city/state/country differently.
+     * Resolved independently from `phone`/`numbers` — see resolveMessage()
+     * in rules.ts — so a rule can supply only `message` and still let
+     * phone resolution fall through to another rule/fallback, or vice versa.
+     * Falls back to the top-level `message` if omitted.
+     */
+    message?: string;
+
+    /**
+     * Override the pill button's label (`pill.text`) when this rule
+     * matches — only meaningful when the top-level `pill` config is set;
+     * ignored otherwise. Resolved independently from phone/message, same
+     * pattern as `message` — see resolvePillText() in rules.ts.
+     */
+    pillText?: string;
+
     schedule?: ScheduleConfig;
     utm?: UtmMatch;
     language?: string;
@@ -78,6 +96,12 @@ export interface PathRuleConfig {
 
     images?: ImagesConfig;
 
+    /** Override the wa.me `?text=` message when this path rule matches — see RuleConfig.message. */
+    message?: string;
+
+    /** Override the pill button's label when this path rule matches — see RuleConfig.pillText. */
+    pillText?: string;
+
     schedule?: ScheduleConfig;
     utm?: UtmMatch;
 }
@@ -86,6 +110,10 @@ export interface FallbackConfig {
     phone?: string;
     numbers?: WeightedNumber[];
     distribution?: DistributionStrategy;
+    /** Override the wa.me `?text=` message when every other rule misses — see RuleConfig.message. */
+    message?: string;
+    /** Override the pill button's label when every other rule misses — see RuleConfig.pillText. */
+    pillText?: string;
 }
 
 export interface PulseConfig {

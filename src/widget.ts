@@ -8,7 +8,7 @@ import type {
 } from "./types";
 import { getBrowserLanguage, getContinent, getQueryParams, getStorage, isMobile, log, merge } from "./utils";
 import { fetchGeoLocation } from "./geo";
-import { resolvePhone } from "./rules";
+import { resolveMessage, resolvePhone, resolvePillText } from "./rules";
 import { trackEvent } from "./analytics";
 import { DEFAULT_ICON_SVG, injectStyles } from "./styles";
 import { ICON_VARIANTS, type IconVariantKey } from "./icons";
@@ -30,6 +30,8 @@ export class WhatsAppFloatingWidget {
     private geoPromise: Promise<PhoneMatchResult | null> | null = null;
     /** Rule-driven image override (from a matching pathRule/rule). */
     private ruleImages: ImagesConfig | undefined;
+    private ruleMessage: string | undefined;
+    private rulePillText: string | undefined;
     /** Explicit programmatic override set via setImages(), takes precedence over everything. */
     private manualImages: ImagesConfig | undefined;
     /** Whether a `pill` button with `expand: "click"` is currently expanded. */
@@ -138,6 +140,11 @@ export class WhatsAppFloatingWidget {
             this.phone = result.phone;
             this.matched = result.matched;
             this.ruleImages = result.images;
+            // Resolved independently from phone/images — a rule can supply
+            // `message`/`pillText` without deciding the phone number, or
+            // vice versa.
+            this.ruleMessage = resolveMessage(config, location, ctx);
+            this.rulePillText = resolvePillText(config, location, ctx);
 
             this.printConsole(location, result);
             this.emit("phoneSelected", { phone: result.phone, matched: result.matched });
@@ -262,7 +269,10 @@ export class WhatsAppFloatingWidget {
     private buildLink(): string {
         const config = this.config;
         const phone = (this.phone || "").replace(/\D/g, "");
-        const message = this.applyMessagePlaceholders(config?.message || "");
+        // ruleMessage (resolved per-rule, independently of phone/images —
+        // see resolveMessage() in rules.ts) takes priority over the
+        // top-level config.message.
+        const message = this.applyMessagePlaceholders(this.ruleMessage || config?.message || "");
         let utmSuffix = "";
 
         if (config?.appendUtmToMessage) {
@@ -301,6 +311,11 @@ export class WhatsAppFloatingWidget {
         this.pillExpanded = false;
 
         const isPill = !!config.pill?.text;
+        // Resolved independently of phone/message (see resolvePillText() in
+        // rules.ts) — only meaningful once `config.pill` is already set;
+        // isPill above still gates on the top-level pill.text so a rule
+        // can't turn pill mode on/off, only relabel it once it's on.
+        const pillText = this.rulePillText || config.pill?.text || "";
         // Pill is an exclusive button style: when set, images/icon/iconVariant
         // are never consulted, so there's nothing to preload/resolve for them.
         const imageUrl = isPill ? undefined : this.resolveImage();
@@ -311,7 +326,7 @@ export class WhatsAppFloatingWidget {
         link.setAttribute("href", this.buildLink());
         link.setAttribute("target", "_blank");
         link.setAttribute("rel", "noopener noreferrer");
-        link.setAttribute("aria-label", config.ariaLabel || config.pill?.text || "WhatsApp");
+        link.setAttribute("aria-label", config.ariaLabel || pillText || "WhatsApp");
 
         if (isPill) {
             const iconWrap = document.createElement("span");
@@ -337,7 +352,7 @@ export class WhatsAppFloatingWidget {
             }
             const textWrap = document.createElement("span");
             textWrap.className = "wa-floating-pill-text";
-            textWrap.textContent = config.pill?.text ?? "";
+            textWrap.textContent = pillText;
             link.appendChild(iconWrap);
             link.appendChild(textWrap);
         } else if (imageUrl) {

@@ -129,6 +129,25 @@ const LEVELS: Level[] = [
     { key: "country", label: "País" },
 ];
 
+/** Whether `rule` targets exactly this location level and its geo fields match `location`. */
+function ruleMatchesLevel(rule: RuleConfig, level: Level, location: ResolvedLocation): boolean {
+    if (level.key === "city") {
+        const cityField = rule.cities || rule.city;
+        if (!cityField) return false;
+        if (!matchesArrayField(cityField, location.city)) return false;
+        if (rule.state && normalize(rule.state) !== normalize(location.state)) return false;
+        if (rule.country && normalize(rule.country) !== normalize(location.country)) return false;
+    } else if (level.key === "state") {
+        if (!rule.state || rule.cities || rule.city) return false;
+        if (normalize(rule.state) !== normalize(location.state)) return false;
+        if (rule.country && normalize(rule.country) !== normalize(location.country)) return false;
+    } else {
+        if (!rule.country || rule.state || rule.cities || rule.city) return false;
+        if (normalize(rule.country) !== normalize(location.country)) return false;
+    }
+    return true;
+}
+
 /**
  * Resolves phone + matched level + image override for the current visitor.
  *
@@ -163,21 +182,7 @@ export function resolvePhone(
             const rule = rules[i] as RuleConfig;
 
             if (!matchesContext(rule, ctx)) continue;
-
-            if (level.key === "city") {
-                const cityField = rule.cities || rule.city;
-                if (!cityField) continue;
-                if (!matchesArrayField(cityField, location.city)) continue;
-                if (rule.state && normalize(rule.state) !== normalize(location.state)) continue;
-                if (rule.country && normalize(rule.country) !== normalize(location.country)) continue;
-            } else if (level.key === "state") {
-                if (!rule.state || rule.cities || rule.city) continue;
-                if (normalize(rule.state) !== normalize(location.state)) continue;
-                if (rule.country && normalize(rule.country) !== normalize(location.country)) continue;
-            } else {
-                if (!rule.country || rule.state || rule.cities || rule.city) continue;
-                if (normalize(rule.country) !== normalize(location.country)) continue;
-            }
+            if (!ruleMatchesLevel(rule, level, location)) continue;
 
             const phone = pickPhoneFromRule(rule, i);
             if (phone) {
@@ -192,4 +197,71 @@ export function resolvePhone(
     }
 
     return { phone: fallbackPhone, matched: "Fallback", rule: config.fallback || null, images: imagesOverride };
+}
+
+/**
+ * Resolves a single string field (`message` or `pillText`) that a rule may
+ * override, independently of phone resolution — a rule can supply that
+ * field without `phone` (or vice versa), so the rule that decides the phone
+ * is not necessarily the one that supplies the override.
+ *
+ * Priority mirrors resolvePhone(): Path rule -> City -> State -> Country ->
+ * Fallback -> the given top-level fallback value, using the first matching
+ * rule (at each level) that actually has the field set, skipping ones that
+ * don't.
+ */
+function resolveRuleOverride(
+    config: WhatsAppFloatingConfig,
+    location: ResolvedLocation,
+    ctx: MatchContext,
+    field: "message" | "pillText",
+    topLevelValue: string | undefined
+): string {
+    const pathRules = config.pathRules || [];
+    for (const rule of pathRules) {
+        if (!matchesPathRule(rule, ctx)) continue;
+        if (rule[field]) return rule[field] as string;
+    }
+
+    const rules = config.rules || [];
+    for (const level of LEVELS) {
+        const actualValue = location[level.key];
+        if (!actualValue) continue;
+
+        for (const rule of rules as RuleConfig[]) {
+            if (!matchesContext(rule, ctx)) continue;
+            if (!ruleMatchesLevel(rule, level, location)) continue;
+            if (rule[field]) return rule[field] as string;
+        }
+    }
+
+    if (config.fallback?.[field]) return config.fallback[field] as string;
+
+    return topLevelValue || "";
+}
+
+/**
+ * Resolves the wa.me `?text=` message for the current visitor — see
+ * resolveRuleOverride() for the resolution order/independence guarantees.
+ */
+export function resolveMessage(
+    config: WhatsAppFloatingConfig,
+    location: ResolvedLocation,
+    ctx: MatchContext
+): string {
+    return resolveRuleOverride(config, location, ctx, "message", config.message);
+}
+
+/**
+ * Resolves the pill button's label (`pill.text`) for the current visitor —
+ * see resolveRuleOverride() for the resolution order/independence
+ * guarantees. Only meaningful when the top-level `pill` config is set;
+ * callers should ignore the result otherwise.
+ */
+export function resolvePillText(
+    config: WhatsAppFloatingConfig,
+    location: ResolvedLocation,
+    ctx: MatchContext
+): string {
+    return resolveRuleOverride(config, location, ctx, "pillText", config.pill?.text);
 }
