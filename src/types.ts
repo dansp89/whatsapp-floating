@@ -167,7 +167,7 @@ export interface PillConfig {
 /** Number = pixels. String accepts any valid CSS length, e.g. "5%", "2rem", "16px". */
 export type CssOffset = number | string;
 
-export type PositionKeyword = "bottom-right" | "bottom-left" | "top-right" | "top-left" | "custom";
+export type PositionKeyword = "bottom-right" | "bottom-left" | "custom";
 
 export interface OffsetConfig {
     top?: CssOffset;
@@ -187,6 +187,7 @@ export interface ResolvedLocation {
     country: string | null;
     state: string | null;
     city: string | null;
+    ip: string | null;
 }
 
 export type MatchLevel = "Path" | "Cidade" | "Estado" | "País" | "Fallback" | "Manual";

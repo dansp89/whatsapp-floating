@@ -159,9 +159,9 @@ describe("injectStyles — position", () => {
         expect(css).toContain("right:25px");
     });
 
-    it("top-left applies top and left", () => {
-        const css = getCSS({ position: "top-left", fallback: { phone: "0" } });
-        expect(css).toContain("top:25px");
+    it("bottom-left applies bottom and left", () => {
+        const css = getCSS({ position: "bottom-left", fallback: { phone: "0" } });
+        expect(css).toContain("bottom:25px");
         expect(css).toContain("left:25px");
     });
 
@@ -173,6 +173,16 @@ describe("injectStyles — position", () => {
         });
         expect(css).toContain("top:10px");
         expect(css).toContain("right:20px");
+    });
+
+    it("custom is the only way to anchor to the top", () => {
+        const css = getCSS({
+            position: "custom",
+            offset: { top: 10, left: 20 },
+            fallback: { phone: "0" },
+        });
+        expect(css).toContain("top:10px");
+        expect(css).toContain("left:20px");
     });
 });
 
@@ -193,6 +203,34 @@ describe("injectStyles — pulse", () => {
         expect(css).toContain("wa-floating-ring");
     });
 
+    it("scale defaults to true when pulse is an object without an explicit `scale` key", () => {
+        // Regression test: `scale` must default to true whenever `pulse` is
+        // set at all (matching the README), not just via the `pulse: true`
+        // shorthand — omitting `scale` in object form previously left the
+        // breathing animation silently disabled.
+        const css = getCSS({
+            theme: { pulse: { ring: true } },
+            fallback: { phone: "0" },
+        });
+        expect(css).toContain("wa-floating-pulse");
+        expect(css).toContain("wa-floating-ring");
+    });
+
+    it("scale:false explicitly disables the breathing animation", () => {
+        const css = getCSS({
+            theme: { pulse: { scale: false, ring: true } },
+            fallback: { phone: "0" },
+        });
+        expect(css).not.toContain("@keyframes wa-floating-pulse");
+        expect(css).toContain("wa-floating-ring");
+    });
+
+    it("no scale/ring animation at all when theme.pulse is unset", () => {
+        const css = getCSS({ fallback: { phone: "0" } });
+        expect(css).not.toContain("@keyframes wa-floating-pulse");
+        expect(css).not.toContain("wa-floating-ring");
+    });
+
     it("custom pulse color is used", () => {
         const css = getCSS({
             theme: { pulse: { ring: true, color: "#ff0000" } },
@@ -207,6 +245,31 @@ describe("injectStyles — pulse", () => {
             fallback: { phone: "0" },
         });
         expect(css).toContain("wa-floating-pulse");
+    });
+
+    it("in pill mode, scale animates the pill-icon wrapper (the visible circle), not the inner svg", () => {
+        // Regression test: the pill's visible "circle" is the
+        // .wa-floating-pill-icon wrapper's background-color, not the SVG's
+        // own circle path (which is made transparent in pill mode). Animating
+        // only `.wa-floating-btn svg` made just the white glyph grow inside a
+        // static-looking pill instead of the whole circle "breathing".
+        const css = getCSS({
+            pill: { text: "Chat" },
+            theme: { pulse: { scale: true } },
+            fallback: { phone: "0" },
+        });
+        expect(css).toContain(".wa-floating-pill-icon{animation:wa-floating-pulse");
+        expect(css).toContain(".wa-floating-pill-icon svg{animation:none!important;}");
+    });
+
+    it("in pill mode, scale still defaults to true when pulse is an object without an explicit `scale` key", () => {
+        const css = getCSS({
+            pill: { text: "Chat" },
+            theme: { pulse: { duration: 200, scaleAmount: 1.72 } },
+            fallback: { phone: "0" },
+        });
+        expect(css).toContain(".wa-floating-pill-icon{animation:wa-floating-pulse");
+        expect(css).toContain(".wa-floating-pill-icon svg{animation:none!important;}");
     });
 });
 

@@ -1,6 +1,6 @@
 {
   "name": "whatsapp-floating",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Dependency-free floating WhatsApp contact button with geolocation-based phone routing, business-hour scheduling, UTM/path rules and analytics integrations. Built for CDN delivery (jsDelivr/unpkg).",
   "license": "MIT",
   "author": "Sellvex <contato@sellvex.com.br> (https://sellvex.com.br)",
@@ -55,6 +55,7 @@
     "test": "bun test tests/",
     "test:watch": "bun test --watch tests/",
     "clean": "rm -rf dist",
+    "docs:i18n": "node scripts/build-docs-i18n.js",
     "prepublishOnly": "npm run clean && npm run build"
   },
   "devDependencies": {

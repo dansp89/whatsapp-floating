@@ -3,9 +3,10 @@ import { getStorage, log, safeJSONParse } from "./utils";
 
 const GEO_CACHE_KEY = "__wa_floating_geo_cache__";
 const GEO_CACHE_TTL = 1000 * 60 * 60 * 6; // 6h
-const EMPTY_LOCATION: ResolvedLocation = { country: null, state: null, city: null };
+const EMPTY_LOCATION: ResolvedLocation = { country: null, state: null, city: null, ip: null };
 
-type GeoProviderParser = (data: Record<string, unknown>) => ResolvedLocation;
+type GeoFields = Omit<ResolvedLocation, "ip">;
+type GeoProviderParser = (data: Record<string, unknown>) => GeoFields;
 type GeoProviderIpParser = (data: Record<string, unknown>) => string | null;
 
 interface GeoProvider {
@@ -120,7 +121,7 @@ function resolveProviders(config: WhatsAppFloatingConfig): GeoProvider[] {
     return providers;
 }
 
-function isUsable(location: ResolvedLocation): boolean {
+function isUsable(location: GeoFields): boolean {
     return !!(location.country || location.state || location.city);
 }
 
@@ -133,12 +134,7 @@ function fetchWithTimeout(url: string, timeout: number): Promise<Response> {
     return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(timer));
 }
 
-interface ProviderResult {
-    location: ResolvedLocation;
-    ip: string | null;
-}
-
-async function tryProvider(provider: GeoProvider, timeout: number, config: WhatsAppFloatingConfig): Promise<ProviderResult | null> {
+async function tryProvider(provider: GeoProvider, timeout: number, config: WhatsAppFloatingConfig): Promise<ResolvedLocation | null> {
     try {
         const res = await fetchWithTimeout(provider.url, timeout);
         if (!res.ok) {
@@ -146,14 +142,15 @@ async function tryProvider(provider: GeoProvider, timeout: number, config: Whats
             return null;
         }
         const data = (await res.json()) as Record<string, unknown>;
-        const location = provider.parse(data);
-        if (!isUsable(location)) {
+        const fields = provider.parse(data);
+        if (!isUsable(fields)) {
             log(config, "warn", `Geo provider ${provider.name} returned no usable fields`);
             return null;
         }
         const ip = (provider.parseIp ?? defaultParseIp)(data);
+        const location: ResolvedLocation = { ...fields, ip };
         log(config, "info", `Geo provider ${provider.name} succeeded`, location);
-        return { location, ip };
+        return location;
     } catch (err) {
         log(config, "warn", `Geo provider ${provider.name} failed`, err);
         return null;
@@ -162,7 +159,6 @@ async function tryProvider(provider: GeoProvider, timeout: number, config: Whats
 
 interface GeoCacheEntry {
     timestamp: number;
-    ip: string | null;
     data: ResolvedLocation;
 }
 
@@ -178,10 +174,10 @@ function readGeoCache(config: WhatsAppFloatingConfig): GeoCacheEntry | null {
     return parsed;
 }
 
-function writeGeoCache(data: ResolvedLocation, ip: string | null): void {
+function writeGeoCache(data: ResolvedLocation): void {
     const storage = getStorage("localStorage");
     if (!storage) return;
-    storage.setItem(GEO_CACHE_KEY, JSON.stringify({ timestamp: Date.now(), ip, data }));
+    storage.setItem(GEO_CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data }));
 }
 
 /**
@@ -205,6 +201,7 @@ export async function fetchGeoLocation(config: WhatsAppFloatingConfig): Promise<
             country: config.location.country ?? null,
             state: config.location.state ?? config.location.region ?? null,
             city: config.location.city ?? null,
+            ip: null,
         };
     }
 
@@ -215,14 +212,14 @@ export async function fetchGeoLocation(config: WhatsAppFloatingConfig): Promise<
     const timeout = config.geoTimeout || 5000;
 
     for (const provider of providers) {
-        const result = await tryProvider(provider, timeout, config);
-        if (result) {
-            if (cached && cached.ip && result.ip && cached.ip === result.ip) {
+        const location = await tryProvider(provider, timeout, config);
+        if (location) {
+            if (cached && cached.data.ip && location.ip && cached.data.ip === location.ip) {
                 log(config, "info", "IP unchanged, reusing cached geolocation", cached.data);
                 return cached.data;
             }
-            if (cacheEnabled) writeGeoCache(result.location, result.ip);
-            return result.location;
+            if (cacheEnabled) writeGeoCache(location);
+            return location;
         }
     }
 

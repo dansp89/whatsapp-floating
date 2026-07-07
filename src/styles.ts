@@ -10,13 +10,16 @@ function toCssLength(value: CssOffset | undefined, fallback: string): string {
 /**
  * Resolves the CSS inset properties for a given position.
  *
- * For the four corner keywords, exactly one vertical (top/bottom) and one
- * horizontal (left/right) side is set, defaulting to bottom-right per spec.
+ * For the two bottom-corner keywords, `bottom` and one horizontal
+ * (left/right) side is set, defaulting to bottom-right per spec. Anchoring
+ * to the top is intentionally not offered as a keyword — a floating
+ * WhatsApp button is conventionally bottom-anchored — but remains
+ * reachable via `"custom"` for callers who need it.
  *
  * For "custom", every side present in `offset` is applied as-is — this is
  * what lets a caller anchor the button using any combination of sides
  * (e.g. only `top`, or `top`+`left` together) instead of being locked into
- * one of the four corners.
+ * one of the two bottom corners.
  */
 function resolveCorner(position: PositionKeyword, offset: WhatsAppFloatingConfig["offset"]): string {
     const DEFAULT_GAP = "25px";
@@ -31,13 +34,11 @@ function resolveCorner(position: PositionKeyword, offset: WhatsAppFloatingConfig
         return css || `bottom:${DEFAULT_GAP};right:${DEFAULT_GAP};`;
     }
 
-    const vertical = position.indexOf("top") === 0 ? "top" : "bottom";
     const horizontal = position.indexOf("left") !== -1 ? "left" : "right";
-
-    const verticalValue = toCssLength(o[vertical], DEFAULT_GAP);
+    const verticalValue = toCssLength(o.bottom, DEFAULT_GAP);
     const horizontalValue = toCssLength(o[horizontal], DEFAULT_GAP);
 
-    return `${vertical}:${verticalValue};${horizontal}:${horizontalValue};`;
+    return `bottom:${verticalValue};${horizontal}:${horizontalValue};`;
 }
 
 export const DEFAULT_ICON_SVG =
@@ -61,9 +62,13 @@ export function injectStyles(config: WhatsAppFloatingConfig): void {
 
     // Pulse: `true` normalizes to `{ scale: true }` (today's behavior,
     // unchanged); an object form additionally allows the ring/halo effect
-    // and tuning duration/scale/color/opacity.
+    // and tuning duration/scale/color/opacity. `scale` defaults to `true`
+    // whenever `pulse` is set at all (matching the README) — it's only
+    // `false` if the caller writes `{ scale: false }` explicitly, e.g. to
+    // use `ring` on its own.
     const pulseRaw = theme.pulse;
     const pulse: PulseConfig = pulseRaw === true ? { scale: true } : pulseRaw || {};
+    const pulseScale = pulseRaw != null && pulse.scale !== false;
     const pulseDuration = pulse.duration ?? 1800;
     const pulseScaleAmount = pulse.scaleAmount ?? 1.08;
     const pulseColor = pulse.color ?? "#25D366";
@@ -127,7 +132,7 @@ export function injectStyles(config: WhatsAppFloatingConfig): void {
         // Pulse "scale" animates the image/icon itself (not the
         // .wa-floating-btn link), so it never fights with the
         // entrance/hover transform already applied to the link element.
-        (pulse.scale
+        (pulseScale
             ? `.wa-floating-btn img,.wa-floating-btn svg{animation:wa-floating-pulse ${pulseDuration}ms ease-in-out infinite;}` +
               `@keyframes wa-floating-pulse{0%,100%{transform:scale(1);}50%{transform:scale(${pulseScaleAmount});}}`
             : "") +
@@ -158,6 +163,17 @@ export function injectStyles(config: WhatsAppFloatingConfig): void {
               `.wa-floating-pill-icon svg{width:60%!important;height:60%!important;max-width:none!important;max-height:none!important;display:block!important;}` +
               `.wa-floating-pill-icon svg>:first-child{fill:transparent;}` +
               `.wa-floating-pill-icon svg path:last-of-type{fill:${pillTextColor};}` +
+              // The pill's visible "circle" is this wrapper's own
+              // background-color, not the SVG's circle path (made
+              // transparent above) — so the scale pulse must animate the
+              // wrapper itself, not the SVG, or the pill would look static
+              // while only the white glyph inside grows. Cancel the
+              // generic `.wa-floating-btn svg` animation here to avoid
+              // compounding both transforms into a double-scale.
+              (pulseScale
+                  ? `.wa-floating-pill-icon{animation:wa-floating-pulse ${pulseDuration}ms ease-in-out infinite;}` +
+                    `.wa-floating-pill-icon svg{animation:none!important;}`
+                  : "") +
               `.wa-floating-pill-text{opacity:0;transition:opacity .2s ease .1s;padding-right:${pillPaddingRight}px;` +
               `color:${pillTextColor};font:${pillFontWeight} ${pillFontSize}px/1.3 -apple-system,BlinkMacSystemFont,sans-serif;}` +
               // Desktop expand rules (above mobileBreakpoint)

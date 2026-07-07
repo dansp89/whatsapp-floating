@@ -21,7 +21,7 @@ type Listener = (detail: unknown) => void;
 
 export class WhatsAppFloatingWidget {
     private config: WhatsAppFloatingConfig | null = null;
-    private location: ResolvedLocation = { country: null, state: null, city: null };
+    private location: ResolvedLocation = { country: null, state: null, city: null, ip: null };
     private phone: string | null = null;
     private matched: PhoneMatchResult["matched"] | null = null;
     private el: HTMLAnchorElement | null = null;
@@ -234,10 +234,35 @@ export class WhatsAppFloatingWidget {
         return mobile ? images.mobile || images.desktop : images.desktop || images.mobile;
     }
 
+    private applyMessagePlaceholders(message: string): string {
+        const location = this.location;
+        const ip = location.ip ?? "";
+        let ipBase64 = "";
+        if (ip && typeof btoa === "function") {
+            try {
+                ipBase64 = btoa(ip);
+            } catch {
+                ipBase64 = "";
+            }
+        }
+        const values: Record<string, string> = {
+            country: location.country ?? "",
+            state: location.state ?? "",
+            region: location.state ?? "",
+            city: location.city ?? "",
+            ip,
+            ip_base64: ipBase64,
+        };
+        return message.replace(/\{\{\s*(\w+)\s*\}\}/g, (match, key: string) => {
+            const value = values[key.toLowerCase()];
+            return value !== undefined ? value : match;
+        });
+    }
+
     private buildLink(): string {
         const config = this.config;
         const phone = (this.phone || "").replace(/\D/g, "");
-        const message = config?.message || "";
+        const message = this.applyMessagePlaceholders(config?.message || "");
         let utmSuffix = "";
 
         if (config?.appendUtmToMessage) {
